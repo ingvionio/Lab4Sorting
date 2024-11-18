@@ -14,8 +14,10 @@
         <StackPanel Grid.Column="1" Margin="10">
             <TextBox x:Name="LogTextBox" Grid.Column="1" Margin="10" Height="200"  IsReadOnly="True"  VerticalScrollBarVisibility="Auto" TextWrapping="Wrap" />
             <StackPanel Orientation="Horizontal" Margin="5">
-                <RadioButton x:Name="BubbleSortRadioButton" Content="Пузырьком" GroupName="SortingAlgorithm" IsChecked="True" Margin="5"/>
-                <RadioButton x:Name="SelectionSortRadioButton" Content="Выбором" GroupName="SortingAlgorithm" Margin="5"/>
+                <RadioButton x:Name="BubbleSortRadioButton" Content="BubbleSort" GroupName="SortingAlgorithm" IsChecked="True" Margin="5"/>
+                <RadioButton x:Name="SelectionSortRadioButton" Content="SelectSort" GroupName="SortingAlgorithm" Margin="5"/>
+                <RadioButton x:Name="HeapSortRadioButton" Content="HeapSort" GroupName="SortingAlgorithm" Margin="5"/>
+                <RadioButton x:Name="QuickSortRadioButton" Content="QuickSort" GroupName="SortingAlgorithm" Margin="5"/>
             </StackPanel>
             <Button x:Name="StartSorting" Content="Начать" Click="StartSorting_Click" Margin="5"/>
             <Label x:Name="DelayLabel" Content="Задержка: 500 мс"/>
