@@ -32,7 +32,9 @@ namespace Lab4Sorting
 
         private void ButtonTask3_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Задание 3 в разработке");
+            SortingTask3Window task3Window = new SortingTask3Window();
+            task3Window.Show();
+            this.Close();
         }
     }
 }

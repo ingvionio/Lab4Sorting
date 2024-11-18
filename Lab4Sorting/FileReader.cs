@@ -22,7 +22,7 @@ namespace Lab4Sorting
             string[] words = Regex.Split(text, @"\W+");
 
             // Filter out empty strings that might result from consecutive delimiters
-            return Array.FindAll(words, word => !string.IsNullOrEmpty(word));
+            return Array.FindAll(words, word => !string.IsNullOrEmpty(word)).Select(word => word.ToLower()).ToArray();
         }
     }
 }
