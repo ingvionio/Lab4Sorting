@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,6 +12,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using OfficeOpenXml;
 
 namespace Lab4Sorting
 {
@@ -48,6 +50,37 @@ namespace Lab4Sorting
             catch (Exception ex)
             {
                 Console.WriteLine($"Error: {ex.Message}");
+            }
+        }
+
+        private void CreateExcelbtn_Click(object sender, RoutedEventArgs e)
+        {
+            // Путь к файлу Excel
+            string filePath = "C:\\Users\\user\\Desktop\\test.xlsx";
+
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+            // Создаем новый файл Excel
+            using (var package = new ExcelPackage(new FileInfo(filePath)))
+            {
+                // Добавляем новый лист
+                var worksheet = package.Workbook.Worksheets.Add("Sheet1");
+
+                // Записываем данные в разные столбцы
+                worksheet.Cells[1, 1].Value = "Column 1";
+                worksheet.Cells[1, 2].Value = "Column 2";
+                worksheet.Cells[1, 3].Value = "Column 3";
+
+                worksheet.Cells[2, 1].Value = "Data 1";
+                worksheet.Cells[2, 2].Value = "Data 2";
+                worksheet.Cells[2, 3].Value = "Data 3";
+
+                worksheet.Cells[3, 1].Value = "Data 4";
+                worksheet.Cells[3, 2].Value = "Data 5";
+                worksheet.Cells[3, 3].Value = "Data 6";
+
+                // Сохраняем файл
+                package.Save();
             }
         }
     }
