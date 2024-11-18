@@ -11,14 +11,28 @@ using System.Windows.Shapes;
 
 namespace Lab4Sorting
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        private void ButtonTask1_Click(object sender, RoutedEventArgs e)
+        {
+            SortingTask1Window task1Window = new SortingTask1Window();
+            task1Window.Show();
+            this.Close();
+        }
+
+        private void ButtonTask2_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Задание 2 в разработке");
+        }
+
+        private void ButtonTask3_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Задание 3 в разработке");
         }
     }
 }

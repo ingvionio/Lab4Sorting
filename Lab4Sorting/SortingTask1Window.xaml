@@ -1,0 +1,26 @@
+﻿<Window x:Class="Lab4Sorting.SortingTask1Window"
+               xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Задание 1: Внутренняя сортировка" Height="450" Width="800">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="3*"/>
+        </Grid.ColumnDefinitions>
+
+        <Canvas x:Name="SortCanvas" Grid.Column="0" Margin="10"/>
+        <!-- Canvas для столбиков -->
+
+        <StackPanel Grid.Column="1" Margin="10">
+            <TextBox x:Name="LogTextBox" Grid.Column="1" Margin="10" Height="200"  IsReadOnly="True"  VerticalScrollBarVisibility="Auto" TextWrapping="Wrap" />
+            <StackPanel Orientation="Horizontal" Margin="5">
+                <RadioButton x:Name="BubbleSortRadioButton" Content="Пузырьком" GroupName="SortingAlgorithm" IsChecked="True" Margin="5"/>
+                <RadioButton x:Name="SelectionSortRadioButton" Content="Выбором" GroupName="SortingAlgorithm" Margin="5"/>
+            </StackPanel>
+            <Button x:Name="StartSorting" Content="Начать" Click="StartSorting_Click" Margin="5"/>
+            <Label x:Name="DelayLabel" Content="Задержка: 500 мс"/>
+            <Slider x:Name="DelaySlider" Minimum="5" Maximum="2000" Value="500" TickFrequency="10" ValueChanged="DelaySlider_ValueChanged" Margin="5"/>
+        </StackPanel>
+
+    </Grid>
+</Window>
