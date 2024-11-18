@@ -37,6 +37,13 @@ namespace Lab4Sorting
                     testLabel.Content += word;
                     testLabel.Content += " ";
                 }
+
+                string[] sortedWords = MergeSort.MergeSorting(words, 0, words.Length - 1);
+                foreach (var word in sortedWords)
+                {
+                    sortedLabel.Content += word;
+                    sortedLabel.Content += " ";
+                }
             }
             catch (Exception ex)
             {
