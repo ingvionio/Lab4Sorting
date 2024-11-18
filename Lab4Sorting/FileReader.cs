@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Lab4Sorting
 {
-    // Это читатель
+    // Это читатель снова
     public class FileReader
     {
         public string[] ReadWordsFromFile(string filePath)
