@@ -33,14 +33,15 @@ namespace Lab4Sorting
 
             try
             {
-                string[] words = reader.ReadWordsFromFile(filePath);
-                foreach (var word in words)
+                //string[] words = reader.ReadArrayFromFile(filePath);
+                List<string> listWords = reader.ReadListFromFile(filePath);
+                foreach (var word in listWords)
                 {
                     testLabel.Content += word;
                     testLabel.Content += " ";
                 }
 
-                string[] sortedWords = MergeSort.MergeSorting(words, 0, words.Length - 1);
+                List<string> sortedWords = ABCSort.ABCSorting(listWords, 0);
                 foreach (var word in sortedWords)
                 {
                     sortedLabel.Content += word;
