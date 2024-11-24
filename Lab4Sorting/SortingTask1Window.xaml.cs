@@ -25,63 +25,74 @@ namespace Lab4Sorting
         public SortingTask1Window()
         {
             InitializeComponent();
-            // AlgorithmDescription.Text = "Выберите алгоритм сортировки";
             log = new StringBuilder();
             delay = 100;
         }
 
         private async void StartSorting_Click(object sender, RoutedEventArgs e)
         {
+            StartSorting.IsEnabled = false;
             Random rand = new Random();
             array = Enumerable.Range(1, arraySize).OrderBy(x => rand.Next()).ToArray();
             log.Clear();
             CreateRectangles(array);
 
-            if (BubbleSortRadioButton.IsChecked == true)
+            try
             {
-                await BubbleSort(array);
+                if (BubbleSortRadioButton.IsChecked == true)
+                {
+                    await BubbleSort(array);
+                }
+                else if (SelectionSortRadioButton.IsChecked == true)
+                {
+                    await SelectionSort(array);
+                }
+                else if (HeapSortRadioButton.IsChecked == true)
+                {
+                    await HeapSort(array);
+                }
+                else if (QuickSortRadioButton.IsChecked == true)
+                {
+                    await QuickSort(array, 0, array.Length - 1);
+                }
             }
-            else if (SelectionSortRadioButton.IsChecked == true)
+            finally
             {
-                await SelectionSort(array);
-            }
-            else if (HeapSortRadioButton.IsChecked == true)
-            {
-                await HeapSort(array);
-            }
-            else if (QuickSortRadioButton.IsChecked == true)
-            {
-                await QuickSort(array, 0, array.Length - 1);
+                StartSorting.IsEnabled = true;
             }
 
             LogTextBox.Text = log.ToString();
         }
 
-       /* private void AlgorithmRadioButton_Checked(object sender, RoutedEventArgs e)
+        private void SortingAlgorithm_Checked(object sender, RoutedEventArgs e)
         {
-            // Обновляем описание алгоритма в зависимости от выбранного RadioButton
+            // Обновляем описание алгоритма при выборе радиокнопки
+            UpdateAlgorithmDescription();
+        }
+
+        private void UpdateAlgorithmDescription()
+        {
             if (BubbleSortRadioButton.IsChecked == true)
             {
-                AlgorithmDescription.Text = "Сортировка пузырьком: Проходим по массиву несколько раз, сравнивая соседние элементы и меняя их местами, если они в неправильном порядке. Большие элементы \"всплывают\" в конец массива.";
+                AlgorithmDescriptionTextBlock.Text = "Сортировка пузырьком: Алгоритм проходит по массиву несколько раз. На каждом проходе сравниваются соседние элементы. Если они в неправильном порядке, то они меняются местами.  Таким образом, большие элементы \"всплывают\" к концу массива, как пузырьки.";
+
             }
             else if (SelectionSortRadioButton.IsChecked == true)
             {
-                AlgorithmDescription.Text = "Сортировка выбором: Находим минимальный элемент в неотсортированной части массива и меняем его местами с первым элементом этой части. Повторяем, пока весь массив не будет отсортирован.";
-
+                AlgorithmDescriptionTextBlock.Text = "Сортировка выбором: Алгоритм находит минимальный элемент в неотсортированной части массива и меняет его местами с первым элементом этой части. Затем процесс повторяется для оставшейся неотсортированной части.";
             }
             else if (HeapSortRadioButton.IsChecked == true)
             {
-                AlgorithmDescription.Text = "Пирамидальная сортировка: Преобразуем массив в бинарную кучу (дерево, где каждый родительский узел больше своих дочерних). Затем извлекаем максимальный элемент (корень кучи) и восстанавливаем свойство кучи, пока весь массив не будет отсортирован.";
+                AlgorithmDescriptionTextBlock.Text = "Пирамидальная сортировка (HeapSort):  Этот алгоритм использует структуру данных, называемую кучей (heap), для эффективной сортировки. Сначала массив преобразуется в кучу, а затем наибольший элемент извлекается из кучи и помещается в конец массива. Этот процесс повторяется до тех пор, пока весь массив не будет отсортирован.";
             }
             else if (QuickSortRadioButton.IsChecked == true)
             {
-                AlgorithmDescription.Text = "Быстрая сортировка: Выбираем \"опорный\" элемент и разбиваем массив на две части: элементы меньше опорного и элементы больше опорного. Рекурсивно сортируем обе части.";
+                AlgorithmDescriptionTextBlock.Text = "Быстрая сортировка (QuickSort):  Этот алгоритм основан на принципе \"разделяй и властвуй\". Он выбирает опорный элемент и переставляет элементы массива таким образом, чтобы все элементы меньше опорного находились слева от него, а все элементы больше - справа. Затем алгоритм рекурсивно сортирует левую и правую части массива.";
             }
-            *//*else
-            {
-                AlgorithmDescription.Text = "Выберите алгоритм сортировки";
-            }*//*
-        }*/
+
+
+
+        }
 
 
         private void CreateRectangles(int[] arr)
