@@ -27,7 +27,10 @@ namespace Lab4Sorting
 
         private void ButtonTask2_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Задание 2 в разработке");
+            //MessageBox.Show("Задание 2 в разработке");
+            SortingTask2 window = new SortingTask2();
+            window.Show();
+            this.Close();
         }
 
         private void ButtonTask3_Click(object sender, RoutedEventArgs e)
