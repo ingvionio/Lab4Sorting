@@ -83,7 +83,6 @@ namespace Lab4Sorting
                     foreach (string word in mergeSortedWords)
                     {
                         SortedWordsTB.AppendText($"{word} \n");
-                        SortedWordsTB.ScrollToEnd();
                     }
 
                     foreach (var item in mergeCountWords)
@@ -91,6 +90,7 @@ namespace Lab4Sorting
                         WordsCountTB.AppendText($"{item.Key} - {item.Value} \n");
                     }
                     break;
+
                 case 1:
                     List<string> ABCSortedWords = ABCSort.ABCSorting(listWords, 0);
                     Dictionary<string, int> ABCCountWords = CountWords(ABCSortedWords);
@@ -103,9 +103,9 @@ namespace Lab4Sorting
                     foreach (var item in ABCCountWords)
                     {
                         WordsCountTB.AppendText($"{item.Key} - {item.Value} \n");
-                        WordsCountTB.ScrollToEnd();
                     }
                     break;
+
                 default:
                     MessageBox.Show("Выберите сортировку");
                     break;
