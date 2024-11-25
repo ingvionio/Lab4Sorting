@@ -97,7 +97,7 @@ namespace Lab4Sorting
 
                     foreach (string word in ABCSortedWords)
                     {
-                        SortedWordsTB.AppendText($"{word} \n")
+                        SortedWordsTB.AppendText($"{word} \n");
                     }
 
                     foreach (var item in ABCCountWords)
