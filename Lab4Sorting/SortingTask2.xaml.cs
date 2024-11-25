@@ -5,120 +5,83 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using ClosedXML.Excel;
 
 namespace Lab4Sorting
 {
-    /// <summary>
-    /// Логика взаимодействия для SortingTask2.xaml
-    /// </summary>
     public partial class SortingTask2 : Window
     {
-        private int[] array;
         private StringBuilder log;
         private int delay;
-        private Rectangle[] rectangles;
-        private int arraySize = 20;
         private SolidColorBrush defaultColor = Brushes.LightBlue;
-        private SolidColorBrush compareColor = Brushes.Yellow;
-        private SolidColorBrush swapColor = Brushes.Red;
-
+        private List<Dictionary<string, string>> table;
+        private string[] headers;
 
         public SortingTask2()
         {
             InitializeComponent();
-            // AlgorithmDescription.Text = "Выберите алгоритм сортировки";
             log = new StringBuilder();
-            delay = 100;
+            delay = 500; // Default delay in ms
+        }
+
+        private void LoadExcelButton_Click(object sender, RoutedEventArgs e)
+        {
+            var openFileDialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "Excel Files (*.xlsx)|*.xlsx|All Files (*.*)|*.*"
+            };
+
+            if (openFileDialog.ShowDialog() == true)
+            {
+                using (var workbook = new XLWorkbook(openFileDialog.FileName))
+                {
+                    var worksheet = workbook.Worksheet(1);
+                    headers = worksheet.FirstRowUsed()
+                                       .CellsUsed()
+                                       .Select(cell => cell.Value.ToString())
+                                       .ToArray();
+
+                    table = worksheet.RowsUsed()
+                                     .Skip(1)
+                                     .Select(row => headers.Zip(row.CellsUsed().Select(cell => cell.Value.ToString()),
+                                                                (header, value) => new { header, value })
+                                                            .ToDictionary(x => x.header, x => x.value))
+                                     .ToList();
+                }
+
+                ExcelColumnComboBox.ItemsSource = headers;
+                Log("Excel-файл загружен. Выберите колонку для сортировки.");
+            }
         }
 
         private async void StartSorting_Click(object sender, RoutedEventArgs e)
         {
-            Random rand = new Random();
-            array = Enumerable.Range(1, arraySize).OrderBy(x => rand.Next()).ToArray();
-            log.Clear();
-            CreateRectangles(array);
+            if (table == null || headers == null || ExcelColumnComboBox.SelectedItem == null)
+            {
+                Log("Не выбран файл или колонка для сортировки.");
+                return;
+            }
+
+            string sortKey = ExcelColumnComboBox.SelectedItem.ToString();
+            Log($"Сортировка по колонке: {sortKey}");
 
             if (DirectMergeSortRadioButton.IsChecked == true)
             {
-                await DirectMergeSort(array.ToList(), blockSize: 5);
+                await DirectMergeSort(table, sortKey);
             }
             else if (NaturalMergeSortRadioButton.IsChecked == true)
             {
-                await NaturalMergeSort(array.ToList());
+                Log("Естественное слияние пока не реализовано.");
             }
             else if (MultiwayMergeSortRadioButton.IsChecked == true)
             {
-                await MultiwayMergeSort(array.ToList(), numberOfWays: 4);
+                Log("Многопутевое слияние пока не реализовано.");
             }
 
-            LogTextBox.Text = log.ToString();
+            Log("Сортировка завершена.");
         }
-
-
-        private void CreateRectangles(int[] arr)
-        {
-            SortCanvas.Children.Clear();
-            rectangles = new Rectangle[arr.Length];
-
-            double canvasWidth = SortCanvas.ActualWidth;
-            double rectWidth = canvasWidth / arr.Length;
-
-            for (int i = 0; i < arr.Length; i++)
-            {
-                rectangles[i] = new Rectangle
-                {
-                    Width = rectWidth,
-                    Height = arr[i] * 20, // Масштабируем высоту (можно настроить)
-                    Fill = Brushes.LightBlue,
-                    Stroke = Brushes.Black,
-                    StrokeThickness = 1
-                };
-
-                Canvas.SetLeft(rectangles[i], i * rectWidth);
-                Canvas.SetBottom(rectangles[i], 0);
-                SortCanvas.Children.Add(rectangles[i]);
-
-
-                // Добавляем номер столбца
-                TextBlock textBlock = new TextBlock
-                {
-                    Text = (i + 1).ToString(),  // Номер столбца (начиная с 1)
-                    Foreground = Brushes.Black,
-                    FontSize = 10, // Размер шрифта
-                    TextAlignment = TextAlignment.Center
-                };
-                Canvas.SetLeft(textBlock, i * rectWidth + rectWidth / 2 - textBlock.ActualWidth / 2);
-                Canvas.SetBottom(textBlock, rectangles[i].Height + 2);
-                SortCanvas.Children.Add(textBlock);
-
-            }
-        }
-
-        private void UpdateRectangles(int[] arr)
-        {
-            for (int i = 0; i < arr.Length; i++)
-            {
-                rectangles[i].Height = arr[i] * 20; // Обновляем высоту
-                // Обновляем позицию текста
-                TextBlock textBlock = (TextBlock)SortCanvas.Children[i * 2 + 1]; // Находим TextBlock (нечетные индексы)
-                Canvas.SetLeft(textBlock, i * (SortCanvas.ActualWidth / arr.Length) + (SortCanvas.ActualWidth / arr.Length) / 2 - textBlock.ActualWidth / 2);
-                Canvas.SetBottom(textBlock, rectangles[i].Height + 2);
-            }
-        }
-
-        private void UpdateLogTextBox()
-        {
-            LogTextBox.Text = log.ToString();
-            LogTextBox.ScrollToEnd(); // Прокрутка к концу
-        }
-
-
 
         private void DelaySlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
@@ -126,211 +89,273 @@ namespace Lab4Sorting
             DelayLabel.Content = $"Задержка: {delay} мс"; // Обновляем Label с задержкой
         }
 
-        public class DataBlock
+        private async Task DirectMergeSort(List<Dictionary<string, string>> table, string sortKey)
         {
-            public int[] Values { get; set; }
-            public SolidColorBrush BlockColor { get; set; } = Brushes.LightBlue;
+            int n = table.Count;
+            int seriesLength = 1;
+            int step = 1; // Номер шага сортировки
+
+            while (seriesLength < n)
+            {
+                Log($"Шаг {step}: Длина цепочки = {seriesLength}");
+
+                // 1. Разделение исходного массива на два вспомогательных
+                var fileB = new List<Dictionary<string, string>>();
+                var fileC = new List<Dictionary<string, string>>();
+
+                int i = 0;
+                while (i < n)
+                {
+                    for (int j = 0; j < seriesLength && i < n; j++, i++)
+                        fileB.Add(table[i]);
+
+                    for (int j = 0; j < seriesLength && i < n; j++, i++)
+                        fileC.Add(table[i]);
+                }
+
+                Log($"Формирование файлов B и C: \nB: {string.Join(", ", fileB.Select(row => row[sortKey]))} \nC: {string.Join(", ", fileC.Select(row => row[sortKey]))}");
+                await VisualizeBlocksWithLabels(new List<List<Dictionary<string, string>>> { fileB, fileC }, sortKey, "B", "C", seriesLength);
+
+                // 2. Слияние вспомогательных файлов обратно в основной массив
+                var merged = new List<Dictionary<string, string>>();
+                int bIndex = 0, cIndex = 0;
+
+                while (bIndex < fileB.Count || cIndex < fileC.Count)
+                {
+                    int bCount = 0, cCount = 0;
+
+                    while ((bCount < seriesLength && bIndex < fileB.Count) ||
+       (cCount < seriesLength && cIndex < fileC.Count))
+                    {
+                        await HighlightComparison(fileB, fileC, bIndex, cIndex, sortKey, seriesLength);
+
+                        if (bCount < seriesLength && bIndex < fileB.Count &&
+                            (cCount >= seriesLength || cIndex >= fileC.Count || CompareValues(fileB[bIndex][sortKey], fileC[cIndex][sortKey]) <= 0))
+                        {
+                            if (cIndex < fileC.Count)
+                                Log($"Сравнение: {fileB[bIndex][sortKey]} (из B) < {fileC[cIndex][sortKey]} (из C): Берём {fileB[bIndex][sortKey]}");
+                            else
+                                Log($"C пусто, берём из B {fileB[bIndex][sortKey]}");
+                            merged.Add(fileB[bIndex]);
+                            bIndex++;
+                            bCount++;
+                        }
+                        else if (cCount < seriesLength && cIndex < fileC.Count)
+                        {
+                            if (fileC.Count != 0)
+                                Log($"Сравнение: {fileC[cIndex][sortKey]} (из C) <= {fileB[bIndex][sortKey]} (из B): Берём {fileC[cIndex][sortKey]}");
+                            else 
+                                Log("C пусто, берём из B {fileB[bIndex][sortKey]}");
+                            merged.Add(fileC[cIndex]);
+                            cIndex++;
+                            cCount++;
+                        }
+
+                        await VisualizeMerged(merged, sortKey, "A");
+                    }
+
+                }
+
+                table.Clear();
+                table.AddRange(merged);
+
+                Log($"После слияния: {string.Join(", ", table.Select(row => row[sortKey]))}");
+                await VisualizeBlocksWithLabels(new List<List<Dictionary<string, string>>> { table }, sortKey, "A", "", seriesLength);
+
+                // 3. Увеличение длины серии и номера шага
+                seriesLength *= 2;
+                step++;
+            }
         }
 
+        private async Task HighlightComparison(
+     List<Dictionary<string, string>> fileB,
+     List<Dictionary<string, string>> fileC,
+     int bIndex,
+     int cIndex,
+     string sortKey,
+     int seriesLength)
+        {
+            // Создаем копии списков для визуализации
+            var blockB = new List<Dictionary<string, string>>(fileB);
+            var blockC = new List<Dictionary<string, string>>(fileC);
 
-        private void CreateBlocks(List<DataBlock> blocks)
+            // Добавляем null, если индексы выходят за пределы списка
+            var highlightedB = bIndex < blockB.Count ? blockB[bIndex] : null;
+            var highlightedC = cIndex < blockC.Count ? blockC[cIndex] : null;
+
+            // Визуализируем блоки B и C, выделяя элементы
+            await VisualizeBlocksWithHighlights(new List<List<Dictionary<string, string>>>
+    {
+        blockB,
+        blockC
+    }, sortKey, "B", "C", seriesLength, highlightedB, highlightedC);
+        }
+
+        private async Task VisualizeBlocksWithHighlights(
+    List<List<Dictionary<string, string>>> blocks,
+    string sortKey,
+    string labelA,
+    string labelB,
+    int seriesLength,
+    Dictionary<string, string> highlightedB,
+    Dictionary<string, string> highlightedC)
         {
             SortCanvas.Children.Clear();
-
             double canvasWidth = SortCanvas.ActualWidth;
             double blockWidth = canvasWidth / blocks.Count;
 
             for (int i = 0; i < blocks.Count; i++)
             {
                 var block = blocks[i];
+                double rectHeight = block.Count * 20;
+
                 var rect = new Rectangle
                 {
                     Width = blockWidth - 10,
-                    Height = block.Values.Length * 20,
-                    Fill = block.BlockColor,
+                    Height = rectHeight,
+                    Fill = defaultColor,
                     Stroke = Brushes.Black,
                     StrokeThickness = 1
                 };
 
                 Canvas.SetLeft(rect, i * blockWidth);
-                Canvas.SetBottom(rect, 0);
+                Canvas.SetTop(rect, SortCanvas.ActualHeight - rectHeight - 20);
                 SortCanvas.Children.Add(rect);
-            }
-        }
 
-
-        private async Task DirectMergeSort(List<int> array, int blockSize)
-        {
-            List<List<int>> blocks = SplitIntoBlocks(array, blockSize);
-            foreach (var block in blocks)
-            {
-                block.Sort(); // Внутренняя сортировка каждого блока
-            }
-
-            log.AppendLine("Блоки после сортировки:");
-            foreach (var block in blocks)
-            {
-                log.AppendLine(string.Join(", ", block));
-            }
-            await VisualizeBlocks(blocks);
-
-            while (blocks.Count > 1)
-            {
-                List<int> merged = MergeTwoRuns(blocks[0], blocks[1]);
-                blocks.RemoveAt(0);
-                blocks[0] = merged;
-
-                await VisualizeBlocks(blocks);
-                log.AppendLine("Слияние блоков:");
-                log.AppendLine(string.Join(", ", blocks[0]));
-            }
-            array.Clear();
-            array.AddRange(blocks[0]);
-        }
-
-        private List<List<int>> SplitIntoBlocks(List<int> array, int blockSize)
-        {
-            List<List<int>> blocks = new();
-            for (int i = 0; i < array.Count; i += blockSize)
-            {
-                blocks.Add(array.Skip(i).Take(blockSize).ToList());
-            }
-            return blocks;
-        }
-
-
-
-        private List<int> MergeTwoRuns(List<int> left, List<int> right)
-        {
-            List<int> merged = new();
-            int i = 0, j = 0;
-            while (i < left.Count && j < right.Count)
-            {
-                if (left[i] <= right[j])
-                    merged.Add(left[i++]);
-                else
-                    merged.Add(right[j++]);
-            }
-            merged.AddRange(left.Skip(i));
-            merged.AddRange(right.Skip(j));
-            return merged;
-        }
-
-
-        private async Task NaturalMergeSort(List<int> array)
-        {
-            List<List<int>> runs = IdentifyNaturalRuns(array);
-
-            log.AppendLine("Найденные подпоследовательности:");
-            foreach (var run in runs)
-            {
-                log.AppendLine(string.Join(", ", run));
-            }
-            await VisualizeBlocks(runs);
-
-            while (runs.Count > 1)
-            {
-                List<int> merged = MergeTwoRuns(runs[0], runs[1]);
-                runs.RemoveAt(0);
-                runs[0] = merged;
-
-                await VisualizeBlocks(runs);
-                log.AppendLine("Слияние подпоследовательностей:");
-                log.AppendLine(string.Join(", ", runs[0]));
-            }
-            array.Clear();
-            array.AddRange(runs[0]);
-        }
-
-        private List<List<int>> IdentifyNaturalRuns(List<int> array)
-        {
-            List<List<int>> runs = new();
-            List<int> currentRun = new() { array[0] };
-
-            for (int i = 1; i < array.Count; i++)
-            {
-                if (array[i] >= array[i - 1])
+                // Подпись для блоков
+                var blockLabel = new TextBlock
                 {
-                    currentRun.Add(array[i]);
-                }
-                else
+                    Text = (i == 0 ? labelA : labelB),
+                    Foreground = Brushes.Black,
+                    FontSize = 14,
+                    FontWeight = FontWeights.Bold,
+                    TextAlignment = TextAlignment.Center
+                };
+                Canvas.SetLeft(blockLabel, i * blockWidth + blockWidth / 2 - 30);
+                Canvas.SetTop(blockLabel, SortCanvas.ActualHeight - rectHeight - 40);
+                SortCanvas.Children.Add(blockLabel);
+
+                for (int j = 0; j < block.Count; j++)
                 {
-                    runs.Add(currentRun);
-                    currentRun = new List<int> { array[i] };
+                    if (block[j] == null) continue;
+
+                    string key = block[j][headers[0]]; // Название строки (значение первого столбца)
+                    string value = block[j][sortKey]; // Значение для сортировки
+
+                    // Проверяем, является ли элемент выделенным
+                    bool isHighlighted = block[j] == highlightedB || block[j] == highlightedC;
+
+                    var label = new TextBlock
+                    {
+                        Text = $"{key} ({value})",
+                        Foreground = isHighlighted ? Brushes.Red : Brushes.Black,
+                        Background = Brushes.White,
+                        TextAlignment = TextAlignment.Center,
+                        Width = blockWidth - 10,
+                        Height = 20
+                    };
+
+                    Canvas.SetLeft(label, i * blockWidth);
+                    Canvas.SetTop(label, SortCanvas.ActualHeight - rectHeight + j * 20 - 20);
+                    SortCanvas.Children.Add(label);
                 }
             }
-            runs.Add(currentRun);
-            return runs;
+
+            await Task.Delay(delay);
         }
 
-        private async Task MultiwayMergeSort(List<int> array, int numberOfWays)
+
+
+
+        private async Task VisualizeMerged(List<Dictionary<string, string>> merged, string sortKey, string label)
         {
-            List<List<int>> blocks = SplitIntoBlocks(array, array.Count / numberOfWays);
-            foreach (var block in blocks)
-            {
-                block.Sort();
-            }
+            await VisualizeBlocksWithLabels(new List<List<Dictionary<string, string>>> { merged }, sortKey, label, "", seriesLength: merged.Count);
+        }
 
-            log.AppendLine("Сортированные блоки:");
-            foreach (var block in blocks)
-            {
-                log.AppendLine(string.Join(", ", block));
-            }
-            await VisualizeBlocks(blocks);
-
-            SortedDictionary<int, int> priorityQueue = new();
-            List<int> pointers = new(blocks.Count);
+        private async Task VisualizeBlocksWithLabels(
+            List<List<Dictionary<string, string>>> blocks,
+            string sortKey,
+            string labelA,
+            string labelB,
+            int seriesLength,
+            bool highlight = false)
+        {
+            SortCanvas.Children.Clear();
+            double canvasWidth = SortCanvas.ActualWidth;
+            double blockWidth = canvasWidth / blocks.Count;
 
             for (int i = 0; i < blocks.Count; i++)
             {
-                if (blocks[i].Count > 0)
+                var block = blocks[i];
+                double rectHeight = block.Count * 20;
+
+                var rect = new Rectangle
                 {
-                    priorityQueue[blocks[i][0]] = i;
-                    pointers.Add(1);
+                    Width = blockWidth - 10,
+                    Height = rectHeight,
+                    Fill = highlight ? Brushes.LightGreen : defaultColor,
+                    Stroke = Brushes.Black,
+                    StrokeThickness = 1
+                };
+
+                Canvas.SetLeft(rect, i * blockWidth);
+                Canvas.SetTop(rect, SortCanvas.ActualHeight - rectHeight - 20);
+                SortCanvas.Children.Add(rect);
+
+                // Подпись для блоков
+                var blockLabel = new TextBlock
+                {
+                    Text = (i == 0 ? labelA : labelB),
+                    Foreground = Brushes.Black,
+                    FontSize = 14,
+                    FontWeight = FontWeights.Bold,
+                    TextAlignment = TextAlignment.Center
+                };
+                Canvas.SetLeft(blockLabel, i * blockWidth + blockWidth / 2 - 30);
+                Canvas.SetTop(blockLabel, SortCanvas.ActualHeight - rectHeight - 40);
+                SortCanvas.Children.Add(blockLabel);
+
+                for (int j = 0; j < block.Count; j++)
+                {
+                    if (block[j] == null) continue;
+
+                    string key = block[j][headers[0]]; // Название строки (значение первого столбца)
+                    string value = block[j][sortKey]; // Значение для сортировки
+
+                    var label = new TextBlock
+                    {
+                        Text = $"{key} ({value})",
+                        Foreground = highlight ? Brushes.Red : Brushes.Black,
+                        Background = Brushes.White,
+                        TextAlignment = TextAlignment.Center,
+                        Width = blockWidth - 10,
+                        Height = 20
+                    };
+
+                    Canvas.SetLeft(label, i * blockWidth);
+                    Canvas.SetTop(label, SortCanvas.ActualHeight - rectHeight + j * 20 - 20);
+                    SortCanvas.Children.Add(label);
                 }
             }
 
-            List<int> sorted = new();
-            while (priorityQueue.Count > 0)
+            await Task.Delay(delay);
+        }
+
+        private int CompareValues(string value1, string value2)
+        {
+            if (double.TryParse(value1, out var num1) && double.TryParse(value2, out var num2))
             {
-                var min = priorityQueue.First();
-                priorityQueue.Remove(min.Key);
-
-                sorted.Add(min.Key);
-
-                int blockIndex = min.Value;
-                if (pointers[blockIndex] < blocks[blockIndex].Count)
-                {
-                    int nextValue = blocks[blockIndex][pointers[blockIndex]];
-                    pointers[blockIndex]++;
-                    priorityQueue[nextValue] = blockIndex;
-                }
-
-                await VisualizeArray(sorted);
+                return num1.CompareTo(num2);
             }
-            array.Clear();
-            array.AddRange(sorted);
+            return string.Compare(value1, value2, StringComparison.Ordinal);
         }
 
-
-        private async Task VisualizeBlocks(List<List<int>> blocks)
+        private void Log(string message)
         {
-            List<DataBlock> dataBlocks = blocks.Select(block => new DataBlock
-            {
-                Values = block.ToArray(),
-                BlockColor = defaultColor
-            }).ToList();
-            Dispatcher.Invoke(() => CreateBlocks(dataBlocks));
-            await Task.Delay(delay);
+            log.AppendLine(message);
+            LogTextBox.Text = log.ToString();
+            LogTextBox.ScrollToEnd();
         }
-
-        private async Task VisualizeArray(List<int> array)
-        {
-            Dispatcher.Invoke(() => UpdateRectangles(array.ToArray()));
-            await Task.Delay(delay);
-        }
-
-
     }
 }
-
