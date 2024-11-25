@@ -89,7 +89,6 @@ namespace Lab4Sorting
                     foreach (var item in mergeCountWords)
                     {
                         WordsCountTB.AppendText($"{item.Key} - {item.Value} \n");
-                        WordsCountTB.ScrollToEnd();
                     }
                     break;
                 case 1:
@@ -98,8 +97,7 @@ namespace Lab4Sorting
 
                     foreach (string word in ABCSortedWords)
                     {
-                        SortedWordsTB.AppendText($"{word} \n");
-                        SortedWordsTB.ScrollToEnd();
+                        SortedWordsTB.AppendText($"{word} \n")
                     }
 
                     foreach (var item in ABCCountWords)
