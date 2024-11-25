@@ -28,30 +28,6 @@ namespace Lab4Sorting
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            FileReader reader = new FileReader();
-            string filePath = "C:\\Users\\user\\Desktop\\test.txt"; // Укажите путь к вашему файлу
-
-            try
-            {
-                //string[] words = reader.ReadArrayFromFile(filePath);
-                List<string> listWords = reader.ReadListFromFile(filePath);
-                foreach (var word in listWords)
-                {
-                    testLabel.Content += word;
-                    testLabel.Content += " ";
-                }
-
-                List<string> sortedWords = ABCSort.ABCSorting(listWords, 0);
-                foreach (var word in sortedWords)
-                {
-                    sortedLabel.Content += word;
-                    sortedLabel.Content += " ";
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error: {ex.Message}");
-            }
         }
 
         private void CreateExcelbtn_Click(object sender, RoutedEventArgs e)
@@ -83,6 +59,77 @@ namespace Lab4Sorting
                 // Сохраняем файл
                 package.Save();
             }
+        }
+
+        private void StartSortBtn_Click(object sender, RoutedEventArgs e)
+        {
+            string filePath = FilePathTB.Text;
+
+            if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
+            {
+                MessageBox.Show("Неверный путь к файлу.");
+                return;
+            }
+
+            FileReader reader = new FileReader();
+            List<string> listWords = reader.ReadListFromFile(filePath);
+
+            switch (SortComboBox.SelectedIndex)
+            {
+                case 0:
+                    List<string> mergeSortedWords = MergeSort.MergeSorting(listWords, 0, listWords.Count() - 1);
+                    Dictionary<string, int> mergeCountWords = CountWords(mergeSortedWords);
+
+                    foreach (string word in mergeSortedWords)
+                    {
+                        SortedWordsTB.AppendText($"{word} \n");
+                        SortedWordsTB.ScrollToEnd();
+                    }
+
+                    foreach (var item in mergeCountWords)
+                    {
+                        WordsCountTB.AppendText($"{item.Key} - {item.Value} \n");
+                        WordsCountTB.ScrollToEnd();
+                    }
+                    break;
+                case 1:
+                    List<string> ABCSortedWords = ABCSort.ABCSorting(listWords, 0);
+                    Dictionary<string, int> ABCCountWords = CountWords(ABCSortedWords);
+
+                    foreach (string word in ABCSortedWords)
+                    {
+                        SortedWordsTB.AppendText($"{word} \n");
+                        SortedWordsTB.ScrollToEnd();
+                    }
+
+                    foreach (var item in ABCCountWords)
+                    {
+                        WordsCountTB.AppendText($"{item.Key} - {item.Value} \n");
+                        WordsCountTB.ScrollToEnd();
+                    }
+                    break;
+                default:
+                    MessageBox.Show("Выберите сортировку");
+                    break;
+            }
+        }
+
+        private Dictionary<string, int> CountWords(List<string> words)
+        {
+            Dictionary<string, int> wordCount = new Dictionary<string, int>();
+
+            foreach (var word in words)
+            {
+                if (wordCount.ContainsKey(word))
+                {
+                    wordCount[word]++;
+                }
+                else
+                {
+                    wordCount[word] = 1;
+                }
+            }
+            return wordCount;
         }
     }
 }
