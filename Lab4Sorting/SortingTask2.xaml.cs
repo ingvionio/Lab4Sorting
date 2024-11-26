@@ -73,7 +73,8 @@ namespace Lab4Sorting
             }
             else if (NaturalMergeSortRadioButton.IsChecked == true)
             {
-                Log("Естественное слияние пока не реализовано.");
+                await NaturalMergeSort(table, sortKey);
+
             }
             else if (MultiwayMergeSortRadioButton.IsChecked == true)
             {
@@ -88,6 +89,121 @@ namespace Lab4Sorting
             delay = (int)e.NewValue;
             DelayLabel.Content = $"Задержка: {delay} мс"; // Обновляем Label с задержкой
         }
+
+        private async Task NaturalMergeSort(List<Dictionary<string, string>> table, string sortKey)
+        {
+            int n = table.Count;
+
+            while (true)
+            {
+                // Шаг 1: Разделение на естественные серии
+                var fileB = new List<Dictionary<string, string>>();
+                var fileC = new List<Dictionary<string, string>>();
+                bool writeToB = true; // Чередуем запись между B и C
+
+                for (int i = 0; i < n;)
+                {
+                    var series = new List<Dictionary<string, string>>();
+                    series.Add(table[i++]); // Начинаем серию с текущего элемента
+
+                    // Находим серию максимальной длины
+                    while (i < n && CompareValues(table[i - 1][sortKey], table[i][sortKey]) <= 0)
+                    {
+                        series.Add(table[i++]);
+                    }
+
+                    // Записываем серию либо в B, либо в C
+                    if (writeToB)
+                        fileB.AddRange(series);
+                    else
+                        fileC.AddRange(series);
+
+                    writeToB = !writeToB; // Чередуем файл
+                }
+
+                Log($"Файлы после разделения:\nB: {string.Join(", ", fileB.Select(row => row[sortKey]))}\nC: {string.Join(", ", fileC.Select(row => row[sortKey]))}");
+                await VisualizeBlocksWithLabels(new List<List<Dictionary<string, string>>> { fileB, fileC }, sortKey, "B", "C", 0);
+
+                // Если файл C пуст, значит сортировка завершена
+                if (fileC.Count == 0)
+                {
+                    Log("Сортировка завершена.");
+                    return;
+                }
+
+                // Шаг 2: Слияние серий
+                var merged = new List<Dictionary<string, string>>();
+                int bIndex = 0, cIndex = 0;
+
+                while (bIndex < fileB.Count || cIndex < fileC.Count)
+                {
+                    // Сливаем одну серию из B и одну серию из C
+                    var seriesB = GetSeries(fileB, ref bIndex, sortKey);
+                    var seriesC = GetSeries(fileC, ref cIndex, sortKey);
+                    var mergedSeries = MergeSeries(seriesB, seriesC, sortKey);
+
+                    merged.AddRange(mergedSeries);
+                    await VisualizeMerged(merged, sortKey, "A");
+                }
+
+                table.Clear();
+                table.AddRange(merged);
+
+                Log($"После слияния: {string.Join(", ", table.Select(row => row[sortKey]))}");
+                await VisualizeBlocksWithLabels(new List<List<Dictionary<string, string>>> { table }, sortKey, "A", "", table.Count);
+
+
+            }
+        }
+
+        // Метод для извлечения одной серии из файла
+        private List<Dictionary<string, string>> GetSeries(List<Dictionary<string, string>> file, ref int index, string sortKey)
+        {
+            var series = new List<Dictionary<string, string>>();
+
+            // Проверяем, что индекс не выходит за пределы
+            if (index >= file.Count)
+            {
+                return series; // Возвращаем пустую серию, если индекс вне диапазона
+            }
+
+            series.Add(file[index++]); // Начинаем серию с текущего элемента
+
+            // Пока не достигнут конец и значения возрастают, продолжаем добавлять элементы в серию
+            while (index < file.Count && CompareValues(file[index - 1][sortKey], file[index][sortKey]) <= 0)
+            {
+                series.Add(file[index++]);
+            }
+
+            return series;
+        }
+
+
+        // Метод для слияния двух серий
+        private List<Dictionary<string, string>> MergeSeries(
+            List<Dictionary<string, string>> seriesB,
+            List<Dictionary<string, string>> seriesC,
+            string sortKey)
+        {
+            var merged = new List<Dictionary<string, string>>();
+            int bIndex = 0, cIndex = 0;
+
+            while (bIndex < seriesB.Count || cIndex < seriesC.Count)
+            {
+                if (bIndex < seriesB.Count && (cIndex >= seriesC.Count || CompareValues(seriesB[bIndex][sortKey], seriesC[cIndex][sortKey]) <= 0))
+                {
+                    merged.Add(seriesB[bIndex++]);
+                }
+                else if (cIndex < seriesC.Count)
+                {
+                    merged.Add(seriesC[cIndex++]);
+                }
+            }
+
+            return merged;
+        }
+
+
 
         private async Task DirectMergeSort(List<Dictionary<string, string>> table, string sortKey)
         {
@@ -113,6 +229,7 @@ namespace Lab4Sorting
                         fileC.Add(table[i]);
                 }
 
+                Log("Файл формируются следующим образом: идем по файлу A и по очерёдно записываем в файл B и С цепочки текущей длины");
                 Log($"Формирование файлов B и C: \nB: {string.Join(", ", fileB.Select(row => row[sortKey]))} \nC: {string.Join(", ", fileC.Select(row => row[sortKey]))}");
                 await VisualizeBlocksWithLabels(new List<List<Dictionary<string, string>>> { fileB, fileC }, sortKey, "B", "C", seriesLength);
 
@@ -124,8 +241,7 @@ namespace Lab4Sorting
                 {
                     int bCount = 0, cCount = 0;
 
-                    while ((bCount < seriesLength && bIndex < fileB.Count) ||
-       (cCount < seriesLength && cIndex < fileC.Count))
+                    while ((bCount < seriesLength && bIndex < fileB.Count) || (cCount < seriesLength && cIndex < fileC.Count))
                     {
                         await HighlightComparison(fileB, fileC, bIndex, cIndex, sortKey, seriesLength);
 
@@ -169,12 +285,12 @@ namespace Lab4Sorting
         }
 
         private async Task HighlightComparison(
-     List<Dictionary<string, string>> fileB,
-     List<Dictionary<string, string>> fileC,
-     int bIndex,
-     int cIndex,
-     string sortKey,
-     int seriesLength)
+             List<Dictionary<string, string>> fileB,
+             List<Dictionary<string, string>> fileC,
+             int bIndex,
+             int cIndex,
+             string sortKey,
+             int seriesLength)
         {
             // Создаем копии списков для визуализации
             var blockB = new List<Dictionary<string, string>>(fileB);
@@ -193,13 +309,13 @@ namespace Lab4Sorting
         }
 
         private async Task VisualizeBlocksWithHighlights(
-    List<List<Dictionary<string, string>>> blocks,
-    string sortKey,
-    string labelA,
-    string labelB,
-    int seriesLength,
-    Dictionary<string, string> highlightedB,
-    Dictionary<string, string> highlightedC)
+            List<List<Dictionary<string, string>>> blocks,
+            string sortKey,
+            string labelA,
+            string labelB,
+            int seriesLength,
+            Dictionary<string, string> highlightedB,
+            Dictionary<string, string> highlightedC)
         {
             SortCanvas.Children.Clear();
             double canvasWidth = SortCanvas.ActualWidth;
@@ -356,6 +472,16 @@ namespace Lab4Sorting
             log.AppendLine(message);
             LogTextBox.Text = log.ToString();
             LogTextBox.ScrollToEnd();
+        }
+
+        private void DirectMergeSortRadioButton_Checked(object sender, RoutedEventArgs e)
+        {
+            LogTextBox_Algorithm.Text = "Алгоритм сортировки простым слияния является простейшим алгоритмом внешней сортировки, основанный на процедуре слияния серией.\r\n\r\nВ данном алгоритме длина серий фиксируется на каждом шаге. В исходном файле все серии имеют длину 1, после первого шага она равна 2, после второго – 4, после третьего – 8, после k -го шага – 2k.\r\n\r\nАлгоритм сортировки простым слиянием\r\n\r\nШаг 1. Исходный файл A разбивается на два вспомогательных файла B и C.\r\n\r\nШаг 2. Вспомогательные файлы B и C сливаются в файл A, при этом одиночные элементы образуют упорядоченные пары.\r\n\r\nШаг 3. Полученный файл A вновь обрабатывается, как указано в шагах 1 и 2. При этом упорядоченные пары переходят в упорядоченные четверки.\r\n\r\nШаг 4. Повторяя шаги, сливаем четверки в восьмерки и т.д., каждый раз удваивая длину слитых последовательностей до тех пор, пока не будет упорядочен целиком весь файл.\r\n\r\nПосле выполнения i проходов получаем два файла, состоящих из серий длины 2i. Окончание процесса происходит при выполнении условия 2i>=n. Следовательно, процесс сортировки простым слиянием требует порядка O(log n) проходов по данным.\r\n\r\nПризнаками конца сортировки простым слиянием являются следующие условия:\r\n\r\nдлина серии не меньше количества элементов в файле (определяется после фазы слияния);\r\nколичество серий равно 1 (определяется на фазе слияния).\r\nпри однофазной сортировке второй по счету вспомогательный файл после распределения серий остался пустым.";
+        }
+
+        private void NaturalMergeSortRadioButton_Checked(object sender, RoutedEventArgs e)
+        {
+            LogTextBox_Algorithm.Text = "Алгоритм сортировки естественным слиянием\r\n\r\nШаг 1. Исходный файл A разбивается на два вспомогательных файла B и C. Распределение происходит следующим образом: поочередно считываются записи ai исходной последовательности (неупорядоченной) таким образом, что если значения ключей соседних записей удовлетворяют условию A(ai)<=A(ai+1), то они записываются в первый вспомогательный файл B. Как только встречаются A(ai)>A(ai+1), то записи ai+1 копируются во второй вспомогательный файл C. Процедура повторяется до тех пор, пока все записи исходной последовательности не будут распределены по файлам.\r\n\r\nШаг 2. Вспомогательные файлы B и C сливаются в файл A, при этом серии образуют упорядоченные последовательности.\r\n\r\nШаг 3. Полученный файл A вновь обрабатывается, как указано в шагах 1 и 2.\r\n\r\nШаг 4. Повторяя шаги, сливаем упорядоченные серии до тех пор, пока не будет упорядочен целиком весь файл.\r\n\r\nСимвол \"`\" обозначает признак конца серии.\r\n\r\nПризнаками конца сортировки естественным слиянием являются следующие условия:\r\n\r\nколичество серий равно 1 (определяется на фазе слияния).\r\nпри однофазной сортировке второй по счету вспомогательный файл после распределения серий остался пустым.";
         }
     }
 }
