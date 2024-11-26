@@ -34,7 +34,7 @@ namespace Lab4Sorting
         //Эти методы и эта кнопка только для того, если спросят, как мы делали
         private void CreateExcelbtn_Click(object sender, RoutedEventArgs e)
         {
-            /*
+
             // Путь к файлу Excel
             string filePath = "C:\\Users\\user\\Desktop\\results.xlsx";
 
@@ -70,7 +70,7 @@ namespace Lab4Sorting
                 // Сохраняем файл
                 package.Save();
             }
-            
+
         }
 
         private static long CountTimeMerge(string testPath)
@@ -100,7 +100,7 @@ namespace Lab4Sorting
 
             return stopwatch.ElapsedMilliseconds;
         }
-        */
+
         private void StartSortBtn_Click(object sender, RoutedEventArgs e)
         {
             string filePath = FilePathTB.Text;

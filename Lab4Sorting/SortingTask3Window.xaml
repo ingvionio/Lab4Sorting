@@ -1,27 +1,52 @@
 ﻿<Window x:Class="Lab4Sorting.SortingTask3Window"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Lab4Sorting"
-        mc:Ignorable="d"
-        Title="SortingTask3Window" Height="450" Width="815" Loaded="Window_Loaded">
-    <Grid>
-        <Button x:Name="CreateExcelbtn" Content="Create Excel file" HorizontalAlignment="Left" Margin="684,475,0,0" VerticalAlignment="Top" Height="38" Width="88" Click="CreateExcelbtn_Click"/>
-        <GroupBox Header="Отсортированные слова из файла" Margin="0,0,400,67">
-            <TextBox x:Name="SortedWordsTB" HorizontalAlignment="Left" TextWrapping="Wrap" Text="" Width="385" IsReadOnly="True"/>
-        </GroupBox>
-        <GroupBox Header="Подсчет слов из файла" Margin="405,0,0,67">
-            <TextBox x:Name="WordsCountTB" HorizontalAlignment="Left" TextWrapping="Wrap" Text="" Width="380" IsReadOnly="True"/>
-        </GroupBox>
-        <GroupBox Header="Введите путь к файлу" Margin="0,367,514,10">
-            <TextBox x:Name="FilePathTB" HorizontalAlignment="Left" TextWrapping="Wrap" Text="" Width="285"/>
-        </GroupBox>
-        <ComboBox x:Name="SortComboBox" HorizontalAlignment="Left" Margin="326,380,0,0" VerticalAlignment="Top" Width="186" Height="44">
-            <ComboBoxItem Content="Merge Sort"/>
-            <ComboBoxItem Content="ABC Sort"/>
-        </ComboBox>
-        <Button x:Name="StartSortBtn" Content="Начать сортировку" HorizontalAlignment="Left" Margin="626,382,0,0" VerticalAlignment="Top" Height="40" Width="146" Click="StartSortBtn_Click"/>
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        Background="{DynamicResource MaterialDesignPaper}"
+        FontFamily="{DynamicResource MaterialDesignFont}"
+        Title="Задание 3: Сортировка слов из файла" Height="450" Width="880" MinHeight="450" MinWidth="880" Loaded="Window_Loaded" WindowStartupLocation="CenterScreen">
 
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <materialDesign:BundledTheme BaseTheme="Light" PrimaryColor="LightGreen" SecondaryColor="Lime" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0">
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <GroupBox Header="Отсортированные слова из файла"  Style="{StaticResource MaterialDesignGroupBox}" Margin="10" Grid.Column="0">
+                <TextBox x:Name="SortedWordsTB" Style="{StaticResource MaterialDesignTextBox}"  TextWrapping="Wrap" Text=""  IsReadOnly="True" Margin="5"/>
+            </GroupBox>
+            <GroupBox Header="Подсчет слов из файла" Style="{StaticResource MaterialDesignGroupBox}"  Margin="10" Grid.Column="1">
+                <TextBox x:Name="WordsCountTB"  Style="{StaticResource MaterialDesignTextBox}" TextWrapping="Wrap" Text="" IsReadOnly="True" Margin="5"/>
+            </GroupBox>
+        </Grid>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="10">
+            <GroupBox Header="Введите путь к файлу" Style="{StaticResource MaterialDesignGroupBox}">
+                <TextBox x:Name="FilePathTB" Style="{StaticResource MaterialDesignTextBox}" TextWrapping="Wrap" Text="" Width="285" Margin="5"/>
+            </GroupBox>
+
+            <ComboBox x:Name="SortComboBox"  Width="186" Height="44" Style="{StaticResource MaterialDesignComboBox}" Margin="5">
+                <ComboBoxItem Content="Merge Sort"/>
+                <ComboBoxItem Content="ABC Sort"/>
+            </ComboBox>
+            <Button x:Name="StartSortBtn" Content="Начать сортировку" Click="CreateExcelbtn_Click" Style="{StaticResource MaterialDesignRaisedButton}" Margin="5"/>
+            <Button x:Name="CreateExcelbtn" Content="Create Excel file"  Click="CreateExcelbtn_Click" Style="{StaticResource MaterialDesignRaisedButton}" Margin="5"/>
+
+        </StackPanel>
     </Grid>
 </Window>

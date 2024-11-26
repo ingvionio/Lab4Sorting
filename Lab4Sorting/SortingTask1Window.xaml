@@ -1,7 +1,18 @@
 ﻿<Window x:Class="Lab4Sorting.SortingTask1Window"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Задание 1: Внутренняя сортировка" Height="500" Width="800">
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        Background="{DynamicResource MaterialDesignPaper}"
+        FontFamily="{DynamicResource MaterialDesignFont}"
+        Title="Задание 1: Внутренняя сортировка" Height="550" Width="850" MinHeight="550" MinWidth="850" WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <materialDesign:BundledTheme BaseTheme="Light" PrimaryColor="LightGreen" SecondaryColor="Lime" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="2*"/>
@@ -11,19 +22,17 @@
         <Canvas x:Name="SortCanvas" Grid.Column="0" Margin="10"/>
 
         <StackPanel Grid.Column="1" Margin="10">
-            <TextBlock x:Name="AlgorithmDescriptionTextBlock" TextWrapping="Wrap" Margin="5,0,5,5"/>
-            <!-- Описание алгоритма -->
-            <TextBox x:Name="LogTextBox" Grid.Column="1" Margin="10" Height="200"  IsReadOnly="True"  VerticalScrollBarVisibility="Auto" TextWrapping="Wrap" />
+            <TextBlock x:Name="AlgorithmDescriptionTextBlock" TextWrapping="Wrap" Margin="5,0,5,5" Style="{StaticResource MaterialDesignBody1TextBlock}"/>
+            <TextBox x:Name="LogTextBox"  Margin="10" Height="200"  IsReadOnly="True"  VerticalScrollBarVisibility="Auto" TextWrapping="Wrap" Style="{StaticResource MaterialDesignTextBox}"/>
             <StackPanel Orientation="Horizontal" Margin="5">
-                <RadioButton x:Name="BubbleSortRadioButton" Content="BubbleSort" GroupName="SortingAlgorithm" IsChecked="True" Margin="5" Checked="SortingAlgorithm_Checked"/>
-                <RadioButton x:Name="SelectionSortRadioButton" Content="SelectSort" GroupName="SortingAlgorithm" Margin="5" Checked="SortingAlgorithm_Checked"/>
-                <RadioButton x:Name="HeapSortRadioButton" Content="HeapSort" GroupName="SortingAlgorithm" Margin="5" Checked="SortingAlgorithm_Checked"/>
-                <RadioButton x:Name="QuickSortRadioButton" Content="QuickSort" GroupName="SortingAlgorithm" Margin="5" Checked="SortingAlgorithm_Checked"/>
+                <RadioButton x:Name="BubbleSortRadioButton" Content="BubbleSort" GroupName="SortingAlgorithm" IsChecked="True" Margin="5" Checked="SortingAlgorithm_Checked" Style="{StaticResource MaterialDesignRadioButton}"/>
+                <RadioButton x:Name="SelectionSortRadioButton" Content="SelectSort" GroupName="SortingAlgorithm" Margin="5" Checked="SortingAlgorithm_Checked" Style="{StaticResource MaterialDesignRadioButton}"/>
+                <RadioButton x:Name="HeapSortRadioButton" Content="HeapSort" GroupName="SortingAlgorithm" Margin="5" Checked="SortingAlgorithm_Checked" Style="{StaticResource MaterialDesignRadioButton}"/>
+                <RadioButton x:Name="QuickSortRadioButton" Content="QuickSort" GroupName="SortingAlgorithm" Margin="5" Checked="SortingAlgorithm_Checked" Style="{StaticResource MaterialDesignRadioButton}"/>
             </StackPanel>
-            <Button x:Name="StartSorting" Content="Начать" Click="StartSorting_Click" Margin="5"/>
-            <Label x:Name="DelayLabel" Content="Задержка: 500 мс"/>
-            <Slider x:Name="DelaySlider" Minimum="5" Maximum="2000" Value="500" TickFrequency="10" ValueChanged="DelaySlider_ValueChanged" Margin="5"/>
+            <Button x:Name="StartSorting" Content="Начать" Click="StartSorting_Click" Margin="5" Style="{StaticResource MaterialDesignRaisedButton}"/>
+            <Label x:Name="DelayLabel" Content="Задержка: 500 мс" Style="{StaticResource MaterialDesignLabel}"/>
+            <Slider x:Name="DelaySlider" Minimum="5" Maximum="2000" Value="500" TickFrequency="10" ValueChanged="DelaySlider_ValueChanged" Margin="5" />
         </StackPanel>
-
     </Grid>
 </Window>

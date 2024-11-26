@@ -9,8 +9,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="EPPlus" Version="7.5.1" />
     <PackageReference Include="ClosedXML" Version="0.104.2" />
+    <PackageReference Include="EPPlus" Version="7.5.1" />
+    <PackageReference Include="MaterialDesignThemes" Version="5.1.1-ci795" />
   </ItemGroup>
 
 </Project>
