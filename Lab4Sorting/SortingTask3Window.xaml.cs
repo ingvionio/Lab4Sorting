@@ -105,6 +105,9 @@ namespace Lab4Sorting
         {
             string filePath = FilePathTB.Text;
 
+            SortedWordsTB.Text = "";
+            WordsCountTB.Text = "";
+
             if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
             {
                 MessageBox.Show("Неверный путь к файлу.");
