@@ -44,9 +44,7 @@
                 <ComboBoxItem Content="Merge Sort"/>
                 <ComboBoxItem Content="ABC Sort"/>
             </ComboBox>
-            <Button x:Name="StartSortBtn" Content="Начать сортировку" Click="CreateExcelbtn_Click" Style="{StaticResource MaterialDesignRaisedButton}" Margin="5"/>
-            <Button x:Name="CreateExcelbtn" Content="Create Excel file"  Click="CreateExcelbtn_Click" Style="{StaticResource MaterialDesignRaisedButton}" Margin="5"/>
-
+            <Button x:Name="StartSortBtn" Content="Начать сортировку" Click="StartSortBtn_Click" Style="{StaticResource MaterialDesignRaisedButton}" Margin="5"/>
         </StackPanel>
     </Grid>
 </Window>

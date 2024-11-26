@@ -32,7 +32,7 @@ namespace Lab4Sorting
         }
 
         //Эти методы и эта кнопка только для того, если спросят, как мы делали
-        private void CreateExcelbtn_Click(object sender, RoutedEventArgs e)
+        /*private void CreateExcelbtn_Click(object sender, RoutedEventArgs e)
         {
 
             // Путь к файлу Excel
@@ -100,7 +100,7 @@ namespace Lab4Sorting
 
             return stopwatch.ElapsedMilliseconds;
         }
-
+*/
         private void StartSortBtn_Click(object sender, RoutedEventArgs e)
         {
             string filePath = FilePathTB.Text;
