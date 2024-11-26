@@ -15,7 +15,7 @@
         </ResourceDictionary>
     </Window.Resources>
 
-    <Grid>
+    <Grid Cursor="">
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
