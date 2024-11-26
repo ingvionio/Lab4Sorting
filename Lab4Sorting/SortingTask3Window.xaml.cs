@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -28,36 +29,14 @@ namespace Lab4Sorting
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            FileReader reader = new FileReader();
-            string filePath = "C:\\Users\\user\\Desktop\\test.txt"; // Укажите путь к вашему файлу
-
-            try
-            {
-                //string[] words = reader.ReadArrayFromFile(filePath);
-                List<string> listWords = reader.ReadListFromFile(filePath);
-                foreach (var word in listWords)
-                {
-                    testLabel.Content += word;
-                    testLabel.Content += " ";
-                }
-
-                List<string> sortedWords = ABCSort.ABCSorting(listWords, 0);
-                foreach (var word in sortedWords)
-                {
-                    sortedLabel.Content += word;
-                    sortedLabel.Content += " ";
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error: {ex.Message}");
-            }
         }
 
+        //Эти методы и эта кнопка только для того, если спросят, как мы делали
         private void CreateExcelbtn_Click(object sender, RoutedEventArgs e)
         {
+            /*
             // Путь к файлу Excel
-            string filePath = "C:\\Users\\user\\Desktop\\test.xlsx";
+            string filePath = "C:\\Users\\user\\Desktop\\results.xlsx";
 
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
@@ -68,21 +47,127 @@ namespace Lab4Sorting
                 var worksheet = package.Workbook.Worksheets.Add("Sheet1");
 
                 // Записываем данные в разные столбцы
-                worksheet.Cells[1, 1].Value = "Column 1";
-                worksheet.Cells[1, 2].Value = "Column 2";
-                worksheet.Cells[1, 3].Value = "Column 3";
+                worksheet.Cells[1, 1].Value = "Количество файлов";
+                worksheet.Cells[1, 2].Value = "Время (мс)";
+                worksheet.Cells[1, 4].Value = "Количество файлов";
+                worksheet.Cells[1, 5].Value = "Время (мс)";
 
-                worksheet.Cells[2, 1].Value = "Data 1";
-                worksheet.Cells[2, 2].Value = "Data 2";
-                worksheet.Cells[2, 3].Value = "Data 3";
+                string[] files = { "100words.txt", "500words.txt", "1000words.txt", "5000words.txt", "10000words.txt", "20000words.txt" };
 
-                worksheet.Cells[3, 1].Value = "Data 4";
-                worksheet.Cells[3, 2].Value = "Data 5";
-                worksheet.Cells[3, 3].Value = "Data 6";
+                int line = 2;
+
+                foreach (var file in files)
+                {
+                    string testPath = $"C:\\Users\\user\\Desktop\\Expirement\\{file}";
+
+                    worksheet.Cells[line, 1].Value = file;
+                    worksheet.Cells[line, 2].Value = CountTimeMerge(testPath);
+                    worksheet.Cells[line, 4].Value = file;
+                    worksheet.Cells[line, 5].Value = CountTimeABC(testPath);
+                    line++;
+                }
 
                 // Сохраняем файл
                 package.Save();
             }
+            
+        }
+
+        private static long CountTimeMerge(string testPath)
+        {
+            FileReader reader = new FileReader();
+            List<string> list = reader.ReadListFromFile(testPath);
+            Stopwatch stopwatch = new Stopwatch();
+            List<string> listSortedByMerge = new List<string>();
+
+            stopwatch.Start();
+            listSortedByMerge = MergeSort.MergeSorting(list, 0, list.Count() - 1);
+            stopwatch.Stop();
+
+            return stopwatch.ElapsedMilliseconds;
+        }
+
+        private static long CountTimeABC(string testPath)
+        {
+            FileReader reader = new FileReader();
+            List<string> list = reader.ReadListFromFile(testPath);
+            Stopwatch stopwatch = new Stopwatch();
+            List<string> listSortedByABC = new List<string>();
+
+            stopwatch.Start();
+            listSortedByABC = ABCSort.ABCSorting(list, 0);
+            stopwatch.Stop();
+
+            return stopwatch.ElapsedMilliseconds;
+        }
+        */
+        private void StartSortBtn_Click(object sender, RoutedEventArgs e)
+        {
+            string filePath = FilePathTB.Text;
+
+            if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
+            {
+                MessageBox.Show("Неверный путь к файлу.");
+                return;
+            }
+
+            FileReader reader = new FileReader();
+            List<string> listWords = reader.ReadListFromFile(filePath);
+
+            switch (SortComboBox.SelectedIndex)
+            {
+                case 0:
+                    List<string> mergeSortedWords = MergeSort.MergeSorting(listWords, 0, listWords.Count() - 1);
+                    Dictionary<string, int> mergeCountWords = CountWords(mergeSortedWords);
+
+                    foreach (string word in mergeSortedWords)
+                    {
+                        SortedWordsTB.AppendText($"{word} \n");
+                    }
+
+                    foreach (var item in mergeCountWords)
+                    {
+                        WordsCountTB.AppendText($"{item.Key} - {item.Value} \n");
+                    }
+                    break;
+
+                case 1:
+                    List<string> ABCSortedWords = ABCSort.ABCSorting(listWords, 0);
+                    Dictionary<string, int> ABCCountWords = CountWords(ABCSortedWords);
+
+                    foreach (string word in ABCSortedWords)
+                    {
+                        SortedWordsTB.AppendText($"{word} \n");
+                    }
+
+                    foreach (var item in ABCCountWords)
+                    {
+                        WordsCountTB.AppendText($"{item.Key} - {item.Value} \n");
+                    }
+                    break;
+
+                default:
+                    MessageBox.Show("Выберите сортировку");
+                    break;
+            }
+        }
+
+        private Dictionary<string, int> CountWords(List<string> words)
+        {
+            Dictionary<string, int> wordCount = new Dictionary<string, int>();
+
+            foreach (var word in words)
+            {
+                if (wordCount.ContainsKey(word))
+                {
+                    wordCount[word]++;
+                }
+                else
+                {
+                    wordCount[word] = 1;
+                }
+            }
+            return wordCount;
         }
     }
 }

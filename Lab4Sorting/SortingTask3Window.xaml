@@ -5,11 +5,23 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Lab4Sorting"
         mc:Ignorable="d"
-        Title="SortingTask3Window" Height="450" Width="800" Loaded="Window_Loaded">
+        Title="SortingTask3Window" Height="450" Width="815" Loaded="Window_Loaded">
     <Grid>
-        <Label x:Name="testLabel" Content="" HorizontalAlignment="Left" Margin="62,46,0,0" VerticalAlignment="Top"/>
-        <Label x:Name="sortedLabel" Content="Sorted: " HorizontalAlignment="Left" Margin="201,157,0,0" VerticalAlignment="Top"/>
-        <Button x:Name="CreateExcelbtn" Content="Create Excel file" HorizontalAlignment="Left" Margin="152,321,0,0" VerticalAlignment="Top" Height="38" Width="88" Click="CreateExcelbtn_Click"/>
+        <Button x:Name="CreateExcelbtn" Content="Create Excel file" HorizontalAlignment="Left" Margin="684,475,0,0" VerticalAlignment="Top" Height="38" Width="88" Click="CreateExcelbtn_Click"/>
+        <GroupBox Header="Отсортированные слова из файла" Margin="0,0,400,67">
+            <TextBox x:Name="SortedWordsTB" HorizontalAlignment="Left" TextWrapping="Wrap" Text="" Width="385" IsReadOnly="True"/>
+        </GroupBox>
+        <GroupBox Header="Подсчет слов из файла" Margin="405,0,0,67">
+            <TextBox x:Name="WordsCountTB" HorizontalAlignment="Left" TextWrapping="Wrap" Text="" Width="380" IsReadOnly="True"/>
+        </GroupBox>
+        <GroupBox Header="Введите путь к файлу" Margin="0,367,514,10">
+            <TextBox x:Name="FilePathTB" HorizontalAlignment="Left" TextWrapping="Wrap" Text="" Width="285"/>
+        </GroupBox>
+        <ComboBox x:Name="SortComboBox" HorizontalAlignment="Left" Margin="326,380,0,0" VerticalAlignment="Top" Width="186" Height="44">
+            <ComboBoxItem Content="Merge Sort"/>
+            <ComboBoxItem Content="ABC Sort"/>
+        </ComboBox>
+        <Button x:Name="StartSortBtn" Content="Начать сортировку" HorizontalAlignment="Left" Margin="626,382,0,0" VerticalAlignment="Top" Height="40" Width="146" Click="StartSortBtn_Click"/>
 
     </Grid>
 </Window>
