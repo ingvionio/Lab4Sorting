@@ -58,12 +58,14 @@ namespace Lab4Sorting
 
         private async void StartSorting_Click(object sender, RoutedEventArgs e)
         {
+            
             if (table == null || headers == null || ExcelColumnComboBox.SelectedItem == null)
             {
                 Log("Не выбран файл или колонка для сортировки.");
                 return;
             }
 
+            StartSorting.IsEnabled = false;
             string sortKey = ExcelColumnComboBox.SelectedItem.ToString();
             Log($"Сортировка по колонке: {sortKey}");
 
@@ -78,10 +80,11 @@ namespace Lab4Sorting
             }
             else if (MultiwayMergeSortRadioButton.IsChecked == true)
             {
-                Log("Многопутевое слияние пока не реализовано.");
+                await ThreeWayMergeSort(table, sortKey);
             }
 
             Log("Сортировка завершена.");
+            StartSorting.IsEnabled = true;
         }
 
         private void DelaySlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -101,108 +104,92 @@ namespace Lab4Sorting
                 var fileC = new List<Dictionary<string, string>>();
                 bool writeToB = true; // Чередуем запись между B и C
 
+                Log("Начинаем разбиение исходного массива на естественные серии.");
                 for (int i = 0; i < n;)
                 {
                     var series = new List<Dictionary<string, string>>();
-                    series.Add(table[i++]); // Начинаем серию с текущего элемента
+                    series.Add(table[i]); // Начинаем серию с текущего элемента
+                    Log($"Создаём новую серию, добавляем элемент {table[i][sortKey]}");
 
                     // Находим серию максимальной длины
-                    while (i < n && CompareValues(table[i - 1][sortKey], table[i][sortKey]) <= 0)
+                    while (i + 1 < n && CompareValues(table[i][sortKey], table[i + 1][sortKey]) <= 0)
                     {
-                        series.Add(table[i++]);
+                        i++;
+                        series.Add(table[i]);
+                        Log($"Добавляем элемент {table[i][sortKey]} в текущую серию.");
                     }
+                    i++;
 
                     // Записываем серию либо в B, либо в C
                     if (writeToB)
+                    {
                         fileB.AddRange(series);
+                        Log($"Серия {string.Join(", ", series.Select(row => row[sortKey]))} записана в файл B.");
+                    }
                     else
+                    {
                         fileC.AddRange(series);
+                        Log($"Серия {string.Join(", ", series.Select(row => row[sortKey]))} записана в файл C.");
+                    }
 
                     writeToB = !writeToB; // Чередуем файл
+
+                    // Визуализация текущего разбиения
+                    await VisualizeBlocksWithLabels(new List<List<Dictionary<string, string>>> { fileB, fileC }, sortKey, "B", "C", 0);
                 }
 
-                Log($"Файлы после разделения:\nB: {string.Join(", ", fileB.Select(row => row[sortKey]))}\nC: {string.Join(", ", fileC.Select(row => row[sortKey]))}");
-                await VisualizeBlocksWithLabels(new List<List<Dictionary<string, string>>> { fileB, fileC }, sortKey, "B", "C", 0);
+                Log($"Файлы после разбиения:\nB: {string.Join(", ", fileB.Select(row => row[sortKey]))}\nC: {string.Join(", ", fileC.Select(row => row[sortKey]))}");
 
                 // Если файл C пуст, значит сортировка завершена
                 if (fileC.Count == 0)
                 {
-                    Log("Сортировка завершена.");
+                    Log("Файл C пуст. Сортировка завершена.");
                     return;
                 }
 
                 // Шаг 2: Слияние серий
                 var merged = new List<Dictionary<string, string>>();
                 int bIndex = 0, cIndex = 0;
+                var cSeriesLenght = fileC.Count;
+                var bSeriesLenght = fileB.Count;
 
                 while (bIndex < fileB.Count || cIndex < fileC.Count)
                 {
-                    // Сливаем одну серию из B и одну серию из C
-                    var seriesB = GetSeries(fileB, ref bIndex, sortKey);
-                    var seriesC = GetSeries(fileC, ref cIndex, sortKey);
-                    var mergedSeries = MergeSeries(seriesB, seriesC, sortKey);
+                    int bCount = 0, cCount = 0;
 
-                    merged.AddRange(mergedSeries);
-                    await VisualizeMerged(merged, sortKey, "A");
+                    while ((bCount < bSeriesLenght && bIndex < fileB.Count) || (cCount < cSeriesLenght && cIndex < fileC.Count))
+                    {
+                        await HighlightComparison(fileB, fileC, bIndex, cIndex, sortKey, Math.Max(cSeriesLenght, bSeriesLenght));
+
+                        if (bCount < bSeriesLenght && bIndex < fileB.Count &&
+                            (cCount >= cSeriesLenght || cIndex >= fileC.Count || CompareValues(fileB[bIndex][sortKey], fileC[cIndex][sortKey]) <= 0))
+                        {
+                            if (cIndex < fileC.Count)
+                                Log($"Сравнение: {fileB[bIndex][sortKey]} (из B) < {fileC[cIndex][sortKey]} (из C): Берём {fileB[bIndex][sortKey]}");
+                            else
+                                Log($"C пусто, берём из B {fileB[bIndex][sortKey]}");
+                            merged.Add(fileB[bIndex]);
+                            bIndex++;
+                            bCount++;
+                        }
+                        else if (cCount < cSeriesLenght && cIndex < fileC.Count)
+                        {
+                            if (bIndex < fileB.Count)
+                                Log($"Сравнение: {fileC[cIndex][sortKey]} (из C) <= {fileB[bIndex][sortKey]} (из B): Берём {fileC[cIndex][sortKey]}");
+                            else
+                                Log($"B пусто, берём из C {fileC[cIndex][sortKey]}");
+                            merged.Add(fileC[cIndex]);
+                            cIndex++;
+                            cCount++;
+                        }
+
+                        await VisualizeMerged(merged, sortKey, "A");
+                    }
                 }
 
-                table.Clear();
-                table.AddRange(merged);
-
-                Log($"После слияния: {string.Join(", ", table.Select(row => row[sortKey]))}");
-                await VisualizeBlocksWithLabels(new List<List<Dictionary<string, string>>> { table }, sortKey, "A", "", table.Count);
-
-
+                table = merged;
             }
         }
-
-        // Метод для извлечения одной серии из файла
-        private List<Dictionary<string, string>> GetSeries(List<Dictionary<string, string>> file, ref int index, string sortKey)
-        {
-            var series = new List<Dictionary<string, string>>();
-
-            // Проверяем, что индекс не выходит за пределы
-            if (index >= file.Count)
-            {
-                return series; // Возвращаем пустую серию, если индекс вне диапазона
-            }
-
-            series.Add(file[index++]); // Начинаем серию с текущего элемента
-
-            // Пока не достигнут конец и значения возрастают, продолжаем добавлять элементы в серию
-            while (index < file.Count && CompareValues(file[index - 1][sortKey], file[index][sortKey]) <= 0)
-            {
-                series.Add(file[index++]);
-            }
-
-            return series;
-        }
-
-
-        // Метод для слияния двух серий
-        private List<Dictionary<string, string>> MergeSeries(
-            List<Dictionary<string, string>> seriesB,
-            List<Dictionary<string, string>> seriesC,
-            string sortKey)
-        {
-            var merged = new List<Dictionary<string, string>>();
-            int bIndex = 0, cIndex = 0;
-
-            while (bIndex < seriesB.Count || cIndex < seriesC.Count)
-            {
-                if (bIndex < seriesB.Count && (cIndex >= seriesC.Count || CompareValues(seriesB[bIndex][sortKey], seriesC[cIndex][sortKey]) <= 0))
-                {
-                    merged.Add(seriesB[bIndex++]);
-                }
-                else if (cIndex < seriesC.Count)
-                {
-                    merged.Add(seriesC[cIndex++]);
-                }
-            }
-
-            return merged;
-        }
-
 
 
         private async Task DirectMergeSort(List<Dictionary<string, string>> table, string sortKey)
@@ -213,25 +200,33 @@ namespace Lab4Sorting
 
             while (seriesLength < n)
             {
-                Log($"Шаг {step}: Длина цепочки = {seriesLength}");
+                Log($"Шаг {step}: Длина цепочек для разбиения = {seriesLength}");
 
-                // 1. Разделение исходного массива на два вспомогательных
+                // 1. Разделение исходного массива на два вспомогательных файла
                 var fileB = new List<Dictionary<string, string>>();
                 var fileC = new List<Dictionary<string, string>>();
 
                 int i = 0;
                 while (i < n)
                 {
+                    Log("Начинаем разбиение массива A на файлы B и C.");
                     for (int j = 0; j < seriesLength && i < n; j++, i++)
+                    {
                         fileB.Add(table[i]);
+                        Log($"Добавляем элемент {table[i][sortKey]} в файл B.");
+                    }
 
                     for (int j = 0; j < seriesLength && i < n; j++, i++)
+                    {
                         fileC.Add(table[i]);
+                        Log($"Добавляем элемент {table[i][sortKey]} в файл C.");
+                    }
+
+                    // Визуализация текущего разбиения
+                    await VisualizeBlocksWithLabels(new List<List<Dictionary<string, string>>> { fileB, fileC }, sortKey, "B", "C", seriesLength);
                 }
 
-                Log("Файл формируются следующим образом: идем по файлу A и по очерёдно записываем в файл B и С цепочки текущей длины");
-                Log($"Формирование файлов B и C: \nB: {string.Join(", ", fileB.Select(row => row[sortKey]))} \nC: {string.Join(", ", fileC.Select(row => row[sortKey]))}");
-                await VisualizeBlocksWithLabels(new List<List<Dictionary<string, string>>> { fileB, fileC }, sortKey, "B", "C", seriesLength);
+                Log($"После разбиения:\nB: {string.Join(", ", fileB.Select(row => row[sortKey]))}\nC: {string.Join(", ", fileC.Select(row => row[sortKey]))}");
 
                 // 2. Слияние вспомогательных файлов обратно в основной массив
                 var merged = new List<Dictionary<string, string>>();
@@ -248,20 +243,14 @@ namespace Lab4Sorting
                         if (bCount < seriesLength && bIndex < fileB.Count &&
                             (cCount >= seriesLength || cIndex >= fileC.Count || CompareValues(fileB[bIndex][sortKey], fileC[cIndex][sortKey]) <= 0))
                         {
-                            if (cIndex < fileC.Count)
-                                Log($"Сравнение: {fileB[bIndex][sortKey]} (из B) < {fileC[cIndex][sortKey]} (из C): Берём {fileB[bIndex][sortKey]}");
-                            else
-                                Log($"C пусто, берём из B {fileB[bIndex][sortKey]}");
+                            Log($"Сравнение: {fileB[bIndex][sortKey]} (из B) < {fileC.ElementAtOrDefault(cIndex)?[sortKey]} (из C): Берём {fileB[bIndex][sortKey]} из B.");
                             merged.Add(fileB[bIndex]);
                             bIndex++;
                             bCount++;
                         }
                         else if (cCount < seriesLength && cIndex < fileC.Count)
                         {
-                            if (fileC.Count != 0)
-                                Log($"Сравнение: {fileC[cIndex][sortKey]} (из C) <= {fileB[bIndex][sortKey]} (из B): Берём {fileC[cIndex][sortKey]}");
-                            else 
-                                Log("C пусто, берём из B {fileB[bIndex][sortKey]}");
+                            Log($"Сравнение: {fileC[cIndex][sortKey]} (из C) <= {fileB.ElementAtOrDefault(bIndex)?[sortKey]} (из B): Берём {fileC[cIndex][sortKey]} из C.");
                             merged.Add(fileC[cIndex]);
                             cIndex++;
                             cCount++;
@@ -269,7 +258,6 @@ namespace Lab4Sorting
 
                         await VisualizeMerged(merged, sortKey, "A");
                     }
-
                 }
 
                 table.Clear();
@@ -278,11 +266,126 @@ namespace Lab4Sorting
                 Log($"После слияния: {string.Join(", ", table.Select(row => row[sortKey]))}");
                 await VisualizeBlocksWithLabels(new List<List<Dictionary<string, string>>> { table }, sortKey, "A", "", seriesLength);
 
-                // 3. Увеличение длины серии и номера шага
+                // Увеличение длины серии и номера шага
                 seriesLength *= 2;
                 step++;
             }
         }
+
+
+
+        private async Task ThreeWayMergeSort(List<Dictionary<string, string>> table, string sortKey)
+        {
+            int n = table.Count;
+            int seriesLength = 1; // Начальная длина цепочки
+            int step = 1;
+
+            while (seriesLength < n)
+            {
+                Log($"Шаг {step}: Длина цепочек для разбиения = {seriesLength}");
+
+                // 1. Разделение массива на три вспомогательных файла
+                var fileB = new List<Dictionary<string, string>>();
+                var fileC = new List<Dictionary<string, string>>();
+                var fileD = new List<Dictionary<string, string>>();
+
+                int i = 0;
+                while (i < n)
+                {
+                    Log("Начинаем разбиение массива A на файлы B, C и D.");
+                    for (int j = 0; j < seriesLength && i < n; j++, i++)
+                    {
+                        fileB.Add(table[i]);
+                        Log($"Добавляем элемент {table[i][sortKey]} в файл B.");
+                    }
+
+                    for (int j = 0; j < seriesLength && i < n; j++, i++)
+                    {
+                        fileC.Add(table[i]);
+                        Log($"Добавляем элемент {table[i][sortKey]} в файл C.");
+                    }
+
+                    for (int j = 0; j < seriesLength && i < n; j++, i++)
+                    {
+                        fileD.Add(table[i]);
+                        Log($"Добавляем элемент {table[i][sortKey]} в файл D.");
+                    }
+
+                    // Визуализация текущего разбиения
+                    await VisualizeBlocksWithLabels(new List<List<Dictionary<string, string>>> { fileB, fileC, fileD }, sortKey, "B", "C", "D", seriesLength);
+                }
+
+                Log($"После разбиения:\nB: {string.Join(", ", fileB.Select(row => row[sortKey]))}\nC: {string.Join(", ", fileC.Select(row => row[sortKey]))}\nD: {string.Join(", ", fileD.Select(row => row[sortKey]))}");
+
+
+                // Сортировка каждого файла перед слиянием
+                fileB.Sort((x, y) => CompareValues(x[sortKey], y[sortKey]));
+                fileC.Sort((x, y) => CompareValues(x[sortKey], y[sortKey]));
+                fileD.Sort((x, y) => CompareValues(x[sortKey], y[sortKey]));
+
+                Log($"После сортировки:\nB: {string.Join(", ", fileB.Select(row => row[sortKey]))}\nC: {string.Join(", ", fileC.Select(row => row[sortKey]))}\nD: {string.Join(", ", fileD.Select(row => row[sortKey]))}");
+                await VisualizeBlocksWithLabels(new List<List<Dictionary<string, string>>> { fileB, fileC, fileD }, sortKey, "B", "C", "D", seriesLength);
+
+                // Слияние данных из трех вспомогательных файлов обратно в основной массив
+                var merged = new List<Dictionary<string, string>>();
+                int bIndex = 0, cIndex = 0, dIndex = 0;
+
+                while (bIndex < fileB.Count || cIndex < fileC.Count || dIndex < fileD.Count)
+                {
+                    Dictionary<string, string> bValue = bIndex < fileB.Count ? fileB[bIndex] : null;
+                    Dictionary<string, string> cValue = cIndex < fileC.Count ? fileC[cIndex] : null;
+                    Dictionary<string, string> dValue = dIndex < fileD.Count ? fileD[dIndex] : null;
+
+                    Dictionary<string, string> minValue = null;
+                    string minKey = null;
+
+                    // Найти минимальное значение среди трех файлов
+                    if (bValue != null && (minValue == null || CompareValues(bValue[sortKey], minValue[sortKey]) < 0))
+                    {
+                        minValue = bValue;
+                        minKey = "B";
+                    }
+
+                    if (cValue != null && (minValue == null || CompareValues(cValue[sortKey], minValue[sortKey]) < 0))
+                    {
+                        minValue = cValue;
+                        minKey = "C";
+                    }
+
+                    if (dValue != null && (minValue == null || CompareValues(dValue[sortKey], minValue[sortKey]) < 0))
+                    {
+                        minValue = dValue;
+                        minKey = "D";
+                    }
+
+                    if (minValue != null)
+                    {
+                        merged.Add(minValue);
+                        if (minKey == "B") bIndex++;
+                        else if (minKey == "C") cIndex++;
+                        else if (minKey == "D") dIndex++;
+
+                        Log($"Добавляем {minValue[sortKey]} из {minKey}");
+                        await VisualizeMerged(merged, sortKey, "A", fileB, fileC, fileD, bIndex, cIndex, dIndex);
+                    }
+                }
+
+                // Обновление основного массива
+                table.Clear();
+                table.AddRange(merged);
+
+                Log($"После слияния: {string.Join(", ", table.Select(row => row[sortKey]))}");
+                await VisualizeBlocksWithLabels(new List<List<Dictionary<string, string>>> { table }, sortKey, "A", "", "", seriesLength);
+
+                // Увеличение длины серии и номера шага
+                seriesLength *= 3; // Увеличиваем длину цепочки втрое
+                step++;
+            }
+        }
+
+
+
+
 
         private async Task HighlightComparison(
              List<Dictionary<string, string>> fileB,
@@ -381,13 +484,170 @@ namespace Lab4Sorting
             await Task.Delay(delay);
         }
 
+        private async Task VisualizeBlocksWithLabels(
+    List<List<Dictionary<string, string>>> blocks,
+    string sortKey,
+    string labelA,
+    string labelB,
+    string labelC,
+    int seriesLength)
+        {
+            SortCanvas.Children.Clear();
+            double canvasWidth = SortCanvas.ActualWidth;
+            double blockWidth = canvasWidth / blocks.Count;
 
+            for (int i = 0; i < blocks.Count; i++)
+            {
+                var block = blocks[i];
+                double rectHeight = block.Count * 20;
 
+                var rect = new Rectangle
+                {
+                    Width = blockWidth - 10,
+                    Height = rectHeight,
+                    Fill = defaultColor,
+                    Stroke = Brushes.Black,
+                    StrokeThickness = 1
+                };
+
+                Canvas.SetLeft(rect, i * blockWidth);
+                Canvas.SetTop(rect, SortCanvas.ActualHeight - rectHeight - 20);
+                SortCanvas.Children.Add(rect);
+
+                // Подпись для блоков
+                string label = i switch
+                {
+                    0 => labelA,
+                    1 => labelB,
+                    2 => labelC,
+                    _ => ""
+                };
+
+                var blockLabel = new TextBlock
+                {
+                    Text = label,
+                    Foreground = Brushes.Black,
+                    FontSize = 14,
+                    FontWeight = FontWeights.Bold,
+                    TextAlignment = TextAlignment.Center
+                };
+                Canvas.SetLeft(blockLabel, i * blockWidth + blockWidth / 2 - 30);
+                Canvas.SetTop(blockLabel, SortCanvas.ActualHeight - rectHeight - 40);
+                SortCanvas.Children.Add(blockLabel);
+
+                for (int j = 0; j < block.Count; j++)
+                {
+                    if (block[j] == null) continue;
+
+                    string key = block[j][headers[0]]; // Название строки (значение первого столбца)
+                    string value = block[j][sortKey]; // Значение для сортировки
+
+                    var labelItem = new TextBlock
+                    {
+                        Text = $"{key} ({value})",
+                        Foreground = Brushes.Black,
+                        Background = Brushes.White,
+                        TextAlignment = TextAlignment.Center,
+                        Width = blockWidth - 10,
+                        Height = 20
+                    };
+
+                    Canvas.SetLeft(labelItem, i * blockWidth);
+                    Canvas.SetTop(labelItem, SortCanvas.ActualHeight - rectHeight + j * 20 - 20);
+                    SortCanvas.Children.Add(labelItem);
+                }
+            }
+
+            await Task.Delay(delay);
+        }
 
         private async Task VisualizeMerged(List<Dictionary<string, string>> merged, string sortKey, string label)
         {
             await VisualizeBlocksWithLabels(new List<List<Dictionary<string, string>>> { merged }, sortKey, label, "", seriesLength: merged.Count);
         }
+
+        private async Task VisualizeMerged(
+            List<Dictionary<string, string>> merged,
+            string sortKey,
+            string labelA,
+            List<Dictionary<string, string>> fileB,
+            List<Dictionary<string, string>> fileC,
+            List<Dictionary<string, string>> fileD,
+            int bIndex,
+            int cIndex,
+            int dIndex)
+        {
+            SortCanvas.Children.Clear();
+            double canvasWidth = SortCanvas.ActualWidth;
+            double blockWidth = canvasWidth / 4; // A, B, C, D - 4 блока
+
+            var files = new List<(List<Dictionary<string, string>> File, int CurrentIndex, string Label)>
+    {
+        (merged, -1, labelA),
+        (fileB, bIndex, "B"),
+        (fileC, cIndex, "C"),
+        (fileD, dIndex, "D")
+    };
+
+            for (int i = 0; i < files.Count; i++)
+            {
+                var (file, currentIndex, label) = files[i];
+                double rectHeight = file.Count * 20;
+
+                // Рисуем блок для файла
+                var rect = new Rectangle
+                {
+                    Width = blockWidth - 10,
+                    Height = rectHeight,
+                    Fill = defaultColor,
+                    Stroke = Brushes.Black,
+                    StrokeThickness = 1
+                };
+
+                Canvas.SetLeft(rect, i * blockWidth);
+                Canvas.SetTop(rect, SortCanvas.ActualHeight - rectHeight - 40);
+                SortCanvas.Children.Add(rect);
+
+                // Добавляем метку для файла
+                var blockLabel = new TextBlock
+                {
+                    Text = label,
+                    Foreground = Brushes.Black,
+                    FontSize = 14,
+                    FontWeight = FontWeights.Bold,
+                    TextAlignment = TextAlignment.Center
+                };
+                Canvas.SetLeft(blockLabel, i * blockWidth + blockWidth / 2 - 30);
+                Canvas.SetTop(blockLabel, SortCanvas.ActualHeight - rectHeight - 60);
+                SortCanvas.Children.Add(blockLabel);
+
+                // Добавляем элементы файла
+                for (int j = 0; j < file.Count; j++)
+                {
+                    if (j < currentIndex) continue; // Пропустить уже перенесенные элементы
+
+                    string key = file[j][headers[0]]; // Название строки (значение первого столбца)
+                    string value = file[j][sortKey]; // Значение для сортировки
+
+                    var labelItem = new TextBlock
+                    {
+                        Text = $"{key} ({value})",
+                        Foreground = Brushes.Black,
+                        Background = Brushes.White,
+                        TextAlignment = TextAlignment.Center,
+                        Width = blockWidth - 10,
+                        Height = 20
+                    };
+
+                    Canvas.SetLeft(labelItem, i * blockWidth);
+                    Canvas.SetTop(labelItem, SortCanvas.ActualHeight - rectHeight + j * 20 - 20);
+                    SortCanvas.Children.Add(labelItem);
+                }
+            }
+
+            await Task.Delay(delay);
+        }
+
 
         private async Task VisualizeBlocksWithLabels(
             List<List<Dictionary<string, string>>> blocks,
@@ -474,14 +734,19 @@ namespace Lab4Sorting
             LogTextBox.ScrollToEnd();
         }
 
-        private void DirectMergeSortRadioButton_Checked(object sender, RoutedEventArgs e)
+        private void DirectMergeSortRadioButton_Checked_1(object sender, RoutedEventArgs e)
         {
             LogTextBox_Algorithm.Text = "Алгоритм сортировки простым слияния является простейшим алгоритмом внешней сортировки, основанный на процедуре слияния серией.\r\n\r\nВ данном алгоритме длина серий фиксируется на каждом шаге. В исходном файле все серии имеют длину 1, после первого шага она равна 2, после второго – 4, после третьего – 8, после k -го шага – 2k.\r\n\r\nАлгоритм сортировки простым слиянием\r\n\r\nШаг 1. Исходный файл A разбивается на два вспомогательных файла B и C.\r\n\r\nШаг 2. Вспомогательные файлы B и C сливаются в файл A, при этом одиночные элементы образуют упорядоченные пары.\r\n\r\nШаг 3. Полученный файл A вновь обрабатывается, как указано в шагах 1 и 2. При этом упорядоченные пары переходят в упорядоченные четверки.\r\n\r\nШаг 4. Повторяя шаги, сливаем четверки в восьмерки и т.д., каждый раз удваивая длину слитых последовательностей до тех пор, пока не будет упорядочен целиком весь файл.\r\n\r\nПосле выполнения i проходов получаем два файла, состоящих из серий длины 2i. Окончание процесса происходит при выполнении условия 2i>=n. Следовательно, процесс сортировки простым слиянием требует порядка O(log n) проходов по данным.\r\n\r\nПризнаками конца сортировки простым слиянием являются следующие условия:\r\n\r\nдлина серии не меньше количества элементов в файле (определяется после фазы слияния);\r\nколичество серий равно 1 (определяется на фазе слияния).\r\nпри однофазной сортировке второй по счету вспомогательный файл после распределения серий остался пустым.";
         }
 
-        private void NaturalMergeSortRadioButton_Checked(object sender, RoutedEventArgs e)
+        private void NaturalMergeSortRadioButton_Checked_1(object sender, RoutedEventArgs e)
         {
-            LogTextBox_Algorithm.Text = "Алгоритм сортировки естественным слиянием\r\n\r\nШаг 1. Исходный файл A разбивается на два вспомогательных файла B и C. Распределение происходит следующим образом: поочередно считываются записи ai исходной последовательности (неупорядоченной) таким образом, что если значения ключей соседних записей удовлетворяют условию A(ai)<=A(ai+1), то они записываются в первый вспомогательный файл B. Как только встречаются A(ai)>A(ai+1), то записи ai+1 копируются во второй вспомогательный файл C. Процедура повторяется до тех пор, пока все записи исходной последовательности не будут распределены по файлам.\r\n\r\nШаг 2. Вспомогательные файлы B и C сливаются в файл A, при этом серии образуют упорядоченные последовательности.\r\n\r\nШаг 3. Полученный файл A вновь обрабатывается, как указано в шагах 1 и 2.\r\n\r\nШаг 4. Повторяя шаги, сливаем упорядоченные серии до тех пор, пока не будет упорядочен целиком весь файл.\r\n\r\nСимвол \"`\" обозначает признак конца серии.\r\n\r\nПризнаками конца сортировки естественным слиянием являются следующие условия:\r\n\r\nколичество серий равно 1 (определяется на фазе слияния).\r\nпри однофазной сортировке второй по счету вспомогательный файл после распределения серий остался пустым.";
+            LogTextBox_Algorithm.Text = "Алгоритм сортировки естественным слиянием\r\n\r\nШаг 1. Исходный файл A разбивается на два вспомогательных файла B и C. Распределение происходит следующим образом: поочередно считываются записи ai исходной последовательности (неупорядоченной) таким образом, что если значения ключей соседних записей удовлетворяют условию A(ai)<=A(ai+1), то они записываются в первый вспомогательный файл B. Как только встречаются A(ai)>A(ai+1), то записи ai+1 копируются во второй вспомогательный файл C. Процедура повторяется до тех пор, пока все записи исходной последовательности не будут распределены по файлам.\r\n\r\nШаг 2. Вспомогательные файлы B и C сливаются в файл A, при этом серии образуют упорядоченные последовательности.\r\n\r\nШаг 3. Полученный файл A вновь обрабатывается, как указано в шагах 1 и 2.\r\n\r\nШаг 4. Повторяя шаги, сливаем упорядоченные серии до тех пор, пока не будет упорядочен целиком весь файл.\r\n\r\n Признаками конца сортировки естественным слиянием являются следующие условия:\r\n\r\nколичество серий равно 1 (определяется на фазе слияния).\r\nпри однофазной сортировке второй по счету вспомогательный файл после распределения серий остался пустым.";
+        }
+
+        private void MultiwayMergeSortRadioButton_Checked(object sender, RoutedEventArgs e)
+        {
+            LogTextBox_Algorithm.Text = "Процесс многопутевого слияния почти как две капли воды схож с процессом прямого слияния. За одним лишь тем исключением, что мы будем использовать больше двух подфайлов. В своём примере я продемонстрирую трёхпутевой метод (значит, кол-во подфайлов будет равно трём).";
         }
     }
 }
