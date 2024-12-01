@@ -26,7 +26,7 @@ namespace Lab4Sorting
         {
             InitializeComponent();
             log = new StringBuilder();
-            delay = 100;
+            delay = 500;
         }
 
         private async void StartSorting_Click(object sender, RoutedEventArgs e)
@@ -138,316 +138,336 @@ namespace Lab4Sorting
         private async Task BubbleSort(int[] arr)
         {
             int n = arr.Length;
+            log.AppendLine("Начало сортировки пузырьком.");
             for (int i = 0; i < n - 1; i++)
             {
                 for (int j = 0; j < n - i - 1; j++)
                 {
-                    // Выделяем сравниваемые столбцы
                     rectangles[j].Fill = compareColor;
                     rectangles[j + 1].Fill = compareColor;
-                    Dispatcher.Invoke(() => UpdateRectangles(arr)); // Обновляем UI, чтобы увидеть выделение
+                    Dispatcher.Invoke(() => UpdateRectangles(arr));
 
-
-                    log.AppendLine($"Сравнение: {arr[j]} и {arr[j + 1]}");
-
+                    log.AppendLine($"Сравнение элементов {arr[j]} и {arr[j + 1]}.");
 
                     if (arr[j] > arr[j + 1])
                     {
-                        log.AppendLine($"Перестановка: {arr[j]} и {arr[j + 1]}");
+                        log.AppendLine($"Элемент {arr[j]} больше, перестановка элементов {arr[j]} и {arr[j + 1]}.");
                         (arr[j], arr[j + 1]) = (arr[j + 1], arr[j]);
 
-
-                        // Выделяем переставляемые столбцы
                         rectangles[j].Fill = swapColor;
                         rectangles[j + 1].Fill = swapColor;
-
 
                         await Task.Delay(delay);
                         Dispatcher.Invoke(() =>
                         {
                             UpdateRectangles(arr);
                             UpdateLogTextBox();
-
-                            // Возвращаем цвет к дефолтному после перестановки
                             rectangles[j].Fill = defaultColor;
                             rectangles[j + 1].Fill = defaultColor;
                             UpdateRectangles(arr);
                         });
-
                     }
                     else
                     {
-
                         await Task.Delay(delay);
                         Dispatcher.Invoke(() =>
                         {
-                            // Возвращаем цвет после сравнения, если не было перестановки
                             rectangles[j].Fill = defaultColor;
                             rectangles[j + 1].Fill = defaultColor;
                             UpdateRectangles(arr);
                         });
                     }
-
                 }
+
+                // Подсветка отсортированных элементов после каждого прохода
+                for (int k = n - i - 1; k < n; k++)  // От i до конца массива
+                {
+                    rectangles[k].Fill = Brushes.Green; // Зеленый для отсортированных элементов
+                }
+
+                await Task.Delay(delay);
+                Dispatcher.Invoke(() =>
+                {
+                    UpdateRectangles(arr);
+                    UpdateLogTextBox();
+                });
             }
+            rectangles[0].Fill = Brushes.Green;
+            log.AppendLine("Сортировка пузырьком завершена.");
         }
+
 
         private async Task SelectionSort(int[] arr)
         {
             int n = arr.Length;
+            log.AppendLine("Начало сортировки выбором.");
             for (int i = 0; i < n - 1; i++)
             {
                 int min_idx = i;
-                rectangles[i].Fill = compareColor; // Выделяем текущий минимальный элемент
+                rectangles[i].Fill = compareColor;
                 Dispatcher.Invoke(() => UpdateRectangles(arr));
+
                 for (int j = i + 1; j < n; j++)
                 {
+                    rectangles[j].Fill = compareColor;
 
-                    rectangles[j].Fill = compareColor;// Выделяем сравниваемый элемент
+                    log.AppendLine($"Сравнение текущего минимума {arr[min_idx]} и элемента {arr[j]}.");
 
-                    log.AppendLine($"Сравнение: {arr[j]} и {arr[min_idx]}");
-
-
-                    Dispatcher.Invoke(() => UpdateRectangles(arr)); // Обновляем UI, чтобы увидеть выделение
+                    Dispatcher.Invoke(() =>
+                    {
+                        UpdateRectangles(arr);
+                        UpdateLogTextBox();
+                    });
 
                     if (arr[j] < arr[min_idx])
                     {
-                        rectangles[min_idx].Fill = defaultColor; // Сбрасываем выделение с предыдущего минимального
-
+                        rectangles[min_idx].Fill = defaultColor;
                         min_idx = j;
-                        rectangles[min_idx].Fill = compareColor; // Выделяем новый минимальный
-
+                        rectangles[min_idx].Fill = compareColor;
+                        log.AppendLine($"Найден новый минимум {arr[min_idx]}.");
 
                     }
                     await Task.Delay(delay);
                     Dispatcher.Invoke(() =>
                     {
-                        rectangles[j].Fill = defaultColor; // Сбрасываем выделение после сравнения
-
+                        rectangles[j].Fill = defaultColor;
                         UpdateRectangles(arr);
                     });
-
-
-
                 }
 
-
+                // Переставляем минимальный элемент с текущей позиции
                 (arr[i], arr[min_idx]) = (arr[min_idx], arr[i]);
-                rectangles[min_idx].Fill = defaultColor;  // Возвращаем цвет после перестановки
+                rectangles[min_idx].Fill = defaultColor;
 
-                log.AppendLine($"Перестановка: {arr[i]} и {arr[min_idx]}");
+                log.AppendLine($"Перестановка элемента {arr[min_idx]} с {arr[i]}.");
+
+                // Отображаем отсортированную часть массива зеленым цветом
+                for (int k = 0; k <= i; k++)
+                {
+                    UpdateRectangles(arr);
+                    rectangles[k].Fill = Brushes.Green; // Зеленый для отсортированных элементов
+                }
 
                 await Task.Delay(delay);
                 Dispatcher.Invoke(() =>
                 {
-
                     UpdateRectangles(arr);
                     UpdateLogTextBox();
-
-
                 });
             }
-
+            rectangles[19].Fill = Brushes.Green;
+            log.AppendLine("Сортировка выбором завершена.");
         }
+
 
         private async Task HeapSort(int[] arr)
         {
             int n = arr.Length;
+            log.AppendLine("Начало пирамидальной сортировки.");
 
-            // Построение кучи (heapify)
+            // Строим кучу
             for (int i = n / 2 - 1; i >= 0; i--)
+            {
+                log.AppendLine($"Построение кучи: обработка узла с индексом {i}.");
                 await Heapify(arr, n, i);
+            }
 
-            // Извлечение элементов из кучи по одному
+            // Извлекаем элементы из кучи по одному
             for (int i = n - 1; i > 0; i--)
             {
-                // Выделяем переставляемые элементы
+                log.AppendLine($"Пирамидальная сортировка: извлечение максимального элемента {arr[0]} и перемещение в конец массива.");
+
+                // Выделяем текущие элементы для обмена
                 rectangles[0].Fill = swapColor;
                 rectangles[i].Fill = swapColor;
                 Dispatcher.Invoke(() => UpdateRectangles(arr));
 
+                // Перестановка
                 (arr[0], arr[i]) = (arr[i], arr[0]);
-                log.AppendLine($"Перестановка: {arr[0]} и {arr[i]}");
 
                 await Task.Delay(delay);
                 Dispatcher.Invoke(() =>
                 {
                     UpdateRectangles(arr);
                     UpdateLogTextBox();
-
-                    // Возвращаем цвет после перестановки
                     rectangles[0].Fill = defaultColor;
                     rectangles[i].Fill = defaultColor;
-                    Dispatcher.Invoke(() => UpdateRectangles(arr)); // Сразу обновляем UI
                 });
 
-                // Вызываем heapify для уменьшенной кучи
+                // Восстановление кучи для оставшегося массива
+                log.AppendLine($"Пирамидальная сортировка: восстановление кучи для оставшейся части массива (длина {i}).");
                 await Heapify(arr, i, 0);
+
+                // Подсветка отсортированной части массива
+                for (int k = n - 1; k > i; k--)
+                {
+                    rectangles[k].Fill = Brushes.Green; // Зеленый для отсортированных элементов
+                }
+
+                await Task.Delay(delay);
+                Dispatcher.Invoke(() =>
+                {
+                    UpdateRectangles(arr);
+                    UpdateLogTextBox();
+                });
             }
+            rectangles[1].Fill = Brushes.Green;
+            rectangles[0].Fill = Brushes.Green;
+            log.AppendLine("Пирамидальная сортировка завершена.");
         }
 
         private async Task Heapify(int[] arr, int n, int i)
         {
-            int largest = i; // Инициализируем наибольший элемент как корень
-            int l = 2 * i + 1; // левый = 2*i + 1
-            int r = 2 * i + 2; // правый = 2*i + 2
-
+            int largest = i;  // Инициализируем наибольший элемент как корень
+            int l = 2 * i + 1; // Левый дочерний элемент
+            int r = 2 * i + 2; // Правый дочерний элемент
 
             // Если левый дочерний элемент больше корня
             if (l < n && arr[l] > arr[largest])
             {
-
+                log.AppendLine($"Построение кучи: левый дочерний элемент {arr[l]} больше текущего узла {arr[largest]}.");
                 largest = l;
             }
 
-
-            // Если правый дочерний элемент больше, чем самый большой элемент на данный момент
+            // Если правый дочерний элемент больше, чем наибольший элемент на данный момент
             if (r < n && arr[r] > arr[largest])
             {
+                log.AppendLine($"Построение кучи: правый дочерний элемент {arr[r]} больше текущего узла {arr[largest]}.");
                 largest = r;
             }
 
             // Если самый большой элемент не корень
             if (largest != i)
             {
+                log.AppendLine($"Построение кучи: перестановка узлов {arr[i]} и {arr[largest]}.");
 
-                // Выделяем переставляемые элементы
+                // Подсвечиваем переставляемые элементы
                 rectangles[i].Fill = swapColor;
                 rectangles[largest].Fill = swapColor;
                 Dispatcher.Invoke(() => UpdateRectangles(arr));
 
+                // Переставляем элементы
                 (arr[i], arr[largest]) = (arr[largest], arr[i]);
-                log.AppendLine($"Перестановка: {arr[i]} и {arr[largest]}");
 
                 await Task.Delay(delay);
                 Dispatcher.Invoke(() =>
                 {
                     UpdateRectangles(arr);
                     UpdateLogTextBox();
-
-                    // Возвращаем цвет после перестановки
                     rectangles[i].Fill = defaultColor;
                     rectangles[largest].Fill = defaultColor;
-                    Dispatcher.Invoke(() => UpdateRectangles(arr));
                 });
 
-                // Рекурсивно heapify затронутый поддерево
+                // Рекурсивно вызываем Heapify для поддерева
                 await Heapify(arr, n, largest);
             }
-
-
         }
-
 
 
         private async Task QuickSort(int[] arr, int low, int high)
         {
             if (low < high)
             {
+                log.AppendLine($"Быстрая сортировка: обработка подмассива от {low} до {high}.");
 
+                // Подсветка всего массива перед сортировкой
+                for (int i = low; i <= high; i++)
+                {
+                    rectangles[i].Fill = Brushes.LightYellow; // Подсвечиваем весь массив перед обработкой
+                }
 
                 int pi = await Partition(arr, low, high);
+                log.AppendLine($"Быстрая сортировка: элемент {arr[pi]} установлен в правильную позицию (индекс {pi}).");
 
+                // Рекурсивно сортируем левую и правую части массива
                 await QuickSort(arr, low, pi - 1);
                 await QuickSort(arr, pi + 1, high);
-
             }
         }
-
-
 
         private async Task<int> Partition(int[] arr, int low, int high)
         {
             int pivot = arr[high];
-            rectangles[high].Fill = compareColor; // Выделяем опорный элемент
-            int i = (low - 1); // индекс меньшего элемента
+            log.AppendLine($"Быстрая сортировка: выбран опорный элемент {pivot}.");
 
+            // Подсвечиваем опорный элемент синим
+            rectangles[high].Fill = Brushes.Cyan;
+
+            int i = low - 1;
+
+            // Подсвечиваем левую и правую часть массива
             for (int j = low; j < high; j++)
             {
-
-                rectangles[j].Fill = compareColor;  // выделяем текущий элемент
+                // Подсвечиваем текущий элемент для сравнения
+                rectangles[j].Fill = Brushes.Yellow;
                 Dispatcher.Invoke(() => UpdateRectangles(arr));
 
-                log.AppendLine($"Сравнение: {arr[j]} и {pivot}"); // Логируем сравнение
+                log.AppendLine($"Быстрая сортировка: сравнение элемента {arr[j]} с опорным {pivot}.");
 
                 if (arr[j] < pivot)
                 {
                     i++;
+                    log.AppendLine($"Быстрая сортировка: перестановка {arr[i]} и {arr[j]}.");
 
+                    // Переставляем элементы и подсвечиваем их красным
                     (arr[i], arr[j]) = (arr[j], arr[i]);
-
-                    log.AppendLine($"Перестановка: {arr[i]} и {arr[j]}");
-                    rectangles[i].Fill = swapColor;
-                    rectangles[j].Fill = swapColor;
+                    rectangles[i].Fill = Brushes.Red;
+                    rectangles[j].Fill = Brushes.Red;
 
                     await Task.Delay(delay);
                     Dispatcher.Invoke(() =>
                     {
-
-
                         UpdateRectangles(arr);
-
                         UpdateLogTextBox();
-                        rectangles[i].Fill = defaultColor;  // Сбрасываем выделение
-                        rectangles[j].Fill = defaultColor;  // Сбрасываем выделение
-                        UpdateRectangles(arr);
+                        rectangles[i].Fill = defaultColor; // Возвращаем цвет
+                        rectangles[j].Fill = defaultColor; // Возвращаем цвет
                     });
-
-
-
-
                 }
                 else
                 {
-
+                    // Если элемент не меньше опорного, возвращаем его цвет в дефолтный
                     await Task.Delay(delay);
                     Dispatcher.Invoke(() =>
                     {
-
-                        rectangles[j].Fill = defaultColor;  // Сбрасываем выделение
-
+                        rectangles[j].Fill = defaultColor;
                         UpdateRectangles(arr);
                     });
-
-
                 }
             }
 
+            // Перестановка опорного элемента с элементом на позиции i+1
+            log.AppendLine($"Быстрая сортировка: перестановка опорного элемента {pivot} с {arr[i + 1]}.");
             (arr[i + 1], arr[high]) = (arr[high], arr[i + 1]);
-            rectangles[high].Fill = defaultColor;  // Сбрасываем выделение с опорного
-
-
-            log.AppendLine($"Перестановка: {arr[i + 1]} и {arr[high]}");
+            rectangles[high].Fill = defaultColor;
 
             await Task.Delay(delay);
             Dispatcher.Invoke(() =>
             {
-
-
                 UpdateRectangles(arr);
-
                 UpdateLogTextBox();
-
-
             });
 
-
-
-
+            // Возвращаем индекс опорного элемента
             return i + 1;
-
-
-
         }
+
+
 
         private void UpdateRectangles(int[] arr)
         {
+            double canvasWidth = SortCanvas.ActualWidth;
+            double rectWidth = canvasWidth / arr.Length;
+
             for (int i = 0; i < arr.Length; i++)
             {
-                rectangles[i].Height = arr[i] * 20; // Обновляем высоту
-                // Обновляем позицию текста
-                TextBlock textBlock = (TextBlock)SortCanvas.Children[i * 2 + 1]; // Находим TextBlock (нечетные индексы)
-                Canvas.SetLeft(textBlock, i * (SortCanvas.ActualWidth / arr.Length) + (SortCanvas.ActualWidth / arr.Length) / 2 - textBlock.ActualWidth / 2);
+                rectangles[i].Height = arr[i] * 20;
+                Canvas.SetLeft(rectangles[i], i * rectWidth);
+                Canvas.SetBottom(rectangles[i], 0);
+
+                // Обновление текста над столбцами
+                TextBlock textBlock = (TextBlock)SortCanvas.Children[i * 2 + 1];
+                textBlock.Text = arr[i].ToString();
+                Canvas.SetLeft(textBlock, i * rectWidth + rectWidth / 2 - textBlock.ActualWidth / 2);
                 Canvas.SetBottom(textBlock, rectangles[i].Height + 2);
             }
         }
