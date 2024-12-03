@@ -36,7 +36,7 @@
             </StackPanel>
             <Button x:Name="StartSorting" Content="Начать сортировку" Click="StartSorting_Click" Margin="5" Style="{StaticResource MaterialDesignRaisedButton}"/>
             <Label x:Name="DelayLabel" Content="Задержка: 500 мс" Style="{StaticResource MaterialDesignLabel}"/>
-            <Slider x:Name="DelaySlider" Minimum="5" Maximum="10000" Value="500" TickFrequency="10" ValueChanged="DelaySlider_ValueChanged" Margin="5"/>
+            <Slider x:Name="DelaySlider" Minimum="5" Maximum="5000" Value="500" TickFrequency="10" ValueChanged="DelaySlider_ValueChanged" Margin="5"/>
         </StackPanel>
     </Grid>
 </Window>
