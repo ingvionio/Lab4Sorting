@@ -6,7 +6,7 @@
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         Background="{DynamicResource MaterialDesignPaper}"
         FontFamily="{DynamicResource MaterialDesignFont}"
-        Title="Задание 2: Внешняя сортировка" Height="586" Width="832" MinHeight="500" MinWidth="800" WindowStartupLocation="CenterScreen">
+        Title="Задание 2: Внешняя сортировка" Height="586" Width="1000" MinHeight="500" MinWidth="800" WindowStartupLocation="CenterScreen">
 
     <Window.Resources>
         <ResourceDictionary>
@@ -18,11 +18,11 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="2*"/>
-            <ColumnDefinition Width="3*"/>
+            <ColumnDefinition Width="233*"/>
+            <ColumnDefinition Width="267*"/>
         </Grid.ColumnDefinitions>
 
-        <Canvas x:Name="SortCanvas" Grid.Column="0" Margin="10"/>
+        <Canvas x:Name="SortCanvas" Grid.Column="0" Margin="10,10,10,10"/>
 
         <StackPanel Grid.Column="1" Margin="10,10,10,0">
             <Button x:Name="LoadExcelButton" Content="Загрузить Excel" Click="LoadExcelButton_Click" Margin="5" Style="{StaticResource MaterialDesignRaisedButton}"/>
